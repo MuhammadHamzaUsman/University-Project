@@ -69,7 +69,7 @@ public class Interpreter{
                 System.out.println(lastValue);
                 fileInput.close();
             }
-            else if(inputS.equals("Exit")){
+            else if(inputS.equals("exit")){
                 break;
             }
         }
