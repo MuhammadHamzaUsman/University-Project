@@ -1,0 +1,23 @@
+package com.example.TextEditor.Interpreter.statements;
+
+public class ReturnStatement extends Statement {
+    private ExpressionStatement valueToReturn;
+
+    public ReturnStatement(ExpressionStatement valueToReturn) {
+        this.valueToReturn = valueToReturn;
+        super.type = StatementType.RETURN_STATEMENT;
+    }
+
+    public ExpressionStatement getValueToReturn() {
+        return valueToReturn;
+    }
+
+    public void setValueToReturn(ExpressionStatement valueToReturn) {
+        this.valueToReturn = valueToReturn;
+    }
+
+    @Override
+    public String toString() {
+        return "ReturnStatement [\n\tvalueToReturn=" + valueToReturn.toString().replace("\n", "\n\t") + "]";
+    }
+}

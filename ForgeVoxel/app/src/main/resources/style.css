@@ -1,0 +1,8 @@
+.keyword    { -fx-fill: blue; -fx-font-weight: bold; }
+.literal    { -fx-fill: darkblue; -fx-font-weight: bold; }
+.function   { -fx-fill: darkmagenta; -fx-font-weight: bold; }
+.identifier { -fx-fill: black; }
+.number     { -fx-fill: darkorange; }
+.comment    { -fx-fill: green; -fx-font-style: italic; }
+.paren      { -fx-fill: purple; }
+.bracket    { -fx-fill: purple; }

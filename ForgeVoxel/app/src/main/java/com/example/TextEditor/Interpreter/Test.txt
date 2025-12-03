@@ -1,0 +1,7 @@
+def compare(number){
+    if(number < 0){return -1}
+    else {if(number == 0){return 0}}
+}
+
+compare(100)
+return {Shape : CUBE, Size : LARGE, Color : DARK_GREEN}

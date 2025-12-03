@@ -1,0 +1,67 @@
+Datatypes
+Number / Double
+Boolean
+null
+Map for return statment on global scope
+
+var Identifier
+var Identifier = Expression
+
+Assignment Operator
+= 
++=
+-=
+*=
+/=
+Relation Operator
+>
+>=
+<
+<=
+==
+!=
+Logical Operator
+&&
+||
+!
+
+Selection Structure
+if(condition){
+
+}
+
+if(condition){
+
+}
+else{
+
+}
+
+if(condition){
+
+}
+else if(condition){
+
+}
+else{
+
+}
+
+Repition Structure
+while(condition){
+
+}
+
+Return statment
+return Expression
+for global scope map can returned as
+
+return {Identifier : Expression}
+if Identifier is not variable name then it is returned as string
+
+Function
+def funcName(param 1, param 2, param3, ...){
+    last value is returned
+    Or use 
+    return statment 
+}
