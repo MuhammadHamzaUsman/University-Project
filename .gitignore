@@ -1,1 +1,4 @@
-TextEditor\Interpreter\Test.txt
+ForgeVoxel/.gradle/
+ForgeVoxel/build/
+ForgeVoxel/app/build/
+ForgeVoxel/app/bin/
