@@ -33,16 +33,13 @@ public class Puzzel {
     private Parser parser = new Parser(variables, null);
     private Interpreter interpreter;
 
-    private SimpleApplication app;
-
-    public Puzzel(VoxelGrid targetGrid, VoxelGridInterface targetGridFunction, VoxelGrid userGrid, String name, SimpleApplication app) {
+    public Puzzel(VoxelGrid targetGrid, VoxelGridInterface targetGridFunction, VoxelGrid userGrid, String name) {
         
         if(!userGrid.isSizeSame(targetGrid)){
             throw new IllegalArgumentException("Grids does not have same size");
         }
 
         this.targetGridFunction = targetGridFunction;
-        this.app = app;
         this.targetGrid = targetGrid;
         this.userGrid = userGrid;
         this.name = name;
@@ -87,7 +84,7 @@ public class Puzzel {
         userNode.attachChild(userGrid.getGridNode());
     }
 
-    public void updateUserGrid(String code){
+    public void updateUserGrid(String code, SimpleApplication app){
         this.code = code;
         parser.setTokens(Lexer.lexer(this.code));
         Statement program = parser.parseProgram();
@@ -110,14 +107,14 @@ public class Puzzel {
 
                 Value value = interpreter.executeProgram(program);
 
-                return getVoxelFromValue(x, y, z, value);
+                return getVoxelFromValue(x, y, z, value, app);
             }, app
         );
 
         updateCompletion();
     }
 
-    private Voxel getVoxelFromValue(int x, int y, int z, Value value){
+    private Voxel getVoxelFromValue(int x, int y, int z, Value value, SimpleApplication app){
         PropertyInfoHolder info = value.getVoxelProperties();
 
         if(info == null) {
@@ -251,14 +248,4 @@ public class Puzzel {
     public void setInterpreter(Interpreter interpreter) {
         this.interpreter = interpreter;
     }
-
-    public SimpleApplication getApp() {
-        return app;
-    }
-
-    public void setApp(SimpleApplication app) {
-        this.app = app;
-    }
-
-    
 }

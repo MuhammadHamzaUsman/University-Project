@@ -3,6 +3,8 @@ package com.example.shape;
 import com.example.TextEditor.Interpreter.interpreter.RuntimeError;
 import com.jme3.math.ColorRGBA;
 
+import javafx.scene.paint.Color;
+
 public enum Colors {
     WHITE (ColorRGBA.fromRGBA255(223, 233, 245, 255)),
     GRAY (ColorRGBA.fromRGBA255(104, 117, 149, 255)),
@@ -29,6 +31,10 @@ public enum Colors {
 
     public ColorRGBA getColor() {
         return color;
+    }
+
+    public Color getFxColor() {
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
     public static Colors getColor(int index) throws RuntimeError{

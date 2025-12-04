@@ -3,6 +3,7 @@
  */
 package com.example;
 
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,7 +20,9 @@ import com.example.shape.Cube;
 import com.example.shape.MaterialEnum;
 import com.example.shape.OrbitCamera;
 import com.example.shape.Puzzel;
+import com.example.shape.Shape;
 import com.example.shape.Size;
+import com.example.shape.Sphere;
 import com.example.shape.Voxel;
 import com.example.shape.VoxelGrid;
 import com.example.shape.VoxelGridInterface;
@@ -39,12 +42,21 @@ import com.jme3.system.lwjgl.LwjglWindow;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
@@ -54,11 +66,24 @@ public class App extends SimpleApplication implements SystemListener{
         return "Hello World!";
     }
 
+    @Override
+    public void destroy() {
+        super.destroy();
+        
+        // Close the JavaFX editor stage safely
+        Platform.runLater(() -> {
+            if (editorStage != null) {
+                editorStage.close();
+            }
+            Platform.exit(); // finally exit JavaFX
+        });
+    }
+
     public static void main(String[] args) {
         javafx.application.Platform.startup(() -> {});
         App app = new App();
         app.start();
-        javafx.application.Platform.exit();
+        // javafx.application.Platform.exit();
     }
 
     // code Editor
@@ -151,7 +176,7 @@ public class App extends SimpleApplication implements SystemListener{
             new VoxelGrid(5, 5, 5, "puzzel-1-target"), 
             bottomFunc,
             new VoxelGrid(5, 5, 5, "puzzel-1-user"), 
-            "puzzel-1", this
+            "puzzel-1"
         );
 
         this.enqueue(() -> {
@@ -177,8 +202,10 @@ public class App extends SimpleApplication implements SystemListener{
             (window, xpos, ypos) -> {
                 Platform.runLater(
                     () -> {
-                        editorStage.setX(xpos);
-                        editorStage.setY(ypos);
+                        if(editorStage != null){
+                            editorStage.setX(xpos);
+                            editorStage.setY(ypos);
+                        }
                     }
                 );
             }
@@ -206,8 +233,10 @@ public class App extends SimpleApplication implements SystemListener{
     public void reshape(int w, int h) {
         Platform.runLater(
             () -> {
-                editorStage.setWidth((int)(this.getContext().getSettings().get("Width")) / 2);
-                editorStage.setHeight((int)(this.getContext().getSettings().get("Height")));
+                if(editorStage != null){
+                    editorStage.setWidth((int)(this.getContext().getSettings().get("Width")) / 2);
+                    editorStage.setHeight((int)(this.getContext().getSettings().get("Height")));
+                }
             }
         );
     }
@@ -217,7 +246,7 @@ public class App extends SimpleApplication implements SystemListener{
             errorCheck = this.enqueue(
                 () -> { 
                     try {
-                        puzzel.updateUserGrid(newCode);
+                        puzzel.updateUserGrid(newCode, this);
 
                         errorDisplay.setText("");
                     } 
@@ -236,7 +265,8 @@ public class App extends SimpleApplication implements SystemListener{
     public void intializeCodeEditor(){
         codeEditor = new CodeArea();
         codeEditor.setParagraphGraphicFactory(LineNumberFactory.get(codeEditor));
-
+        codeEditor.getStyleClass().add("code-editor");
+        
         errorDisplay = new TextArea();
         errorDisplay.setEditable(false);
         errorDisplay.setWrapText(true);
@@ -257,11 +287,28 @@ public class App extends SimpleApplication implements SystemListener{
 
         addListenerToCodeEditor();
 
+        GridPane propertiesGrid = new GridPane();
+        propertiesGrid.setPrefSize(settings.getWindowWidth(), 50);
+        propertiesGrid.getStyleClass().add("grid-pane");
+
+        int colorCol = addColorsToUI(propertiesGrid)[0];
+        HBox shapeRow = getRowOfShapes();
+        HBox sizeRow = getRowOfSizes();
+        
+        propertiesGrid.add(shapeRow, colorCol, 0);
+        propertiesGrid.add(sizeRow, colorCol, 1);
+
+
         // ui
         VirtualizedScrollPane<CodeArea> vsPane = new VirtualizedScrollPane<>(codeEditor);
 
-        VBox layout = new VBox(vsPane, errorDisplay);
+        VBox layout = new VBox(vsPane, errorDisplay, propertiesGrid);
         VBox.setVgrow(vsPane, Priority.ALWAYS);
+
+        Font font = Font.loadFont(
+            getClass().getResourceAsStream("/BlockCraftMedium-PVLzd.otf"),
+            14
+        );
 
         Scene scene = new Scene(layout);
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
@@ -278,6 +325,7 @@ public class App extends SimpleApplication implements SystemListener{
         int x[] = new int[1];
         int y[] = new int[1];
         GLFW.glfwGetWindowPos(windowHandle, x, y);
+        
         editorStage.setX(x[0]);
         editorStage.setY(y[0]);
 
@@ -328,5 +376,80 @@ public class App extends SimpleApplication implements SystemListener{
                 }
             }
         );
+    }
+
+    private int[] addColorsToUI(GridPane grid){
+        int numColors = Colors.values().length;
+
+        double colorRow = 2;
+        int colorCol = (int)Math.ceil(numColors / colorRow);
+        int index = 0;
+        int xGrid = 0, yGrid = 0;
+        Rectangle backRectangle;
+
+        while (index < numColors) {
+            backRectangle = new Rectangle(25, 25, Colors.getColor(index++).getFxColor());
+            grid.add(backRectangle, xGrid++, yGrid);
+            
+            if(xGrid >= colorCol){ 
+                xGrid = 0;
+                yGrid++;
+            }
+        }
+
+        return new int []{colorCol, (int)colorRow};
+    }
+
+    private Rectangle createVerticalSperator(int width, int height){
+        Rectangle rect = new Rectangle(width, height);
+        rect.setFill(Color.rgb(79, 79, 79));
+        return rect;
+    }
+
+    private HBox getRowOfShapes(){
+
+        ImageView cubeImage = new ImageView(new Image(getClass().getResourceAsStream("/cube.png")));
+        ImageView sphereImage = new ImageView(new Image(getClass().getResourceAsStream("/sphere.png")));
+        ImageView cylinderImage = new ImageView(new Image(getClass().getResourceAsStream("/cylinder.png")));     
+
+        for(ImageView imageView : List.of(cubeImage, sphereImage, cylinderImage)){
+            imageView.setFitWidth(25);
+            imageView.setFitHeight(25);
+            imageView.setPreserveRatio(true);
+        }
+
+        HBox shapeRow = new HBox(3);
+        shapeRow.setAlignment(Pos.CENTER);
+        shapeRow.setPadding(new Insets(0, 3, 0, 3));
+
+        shapeRow.getChildren().addAll(cubeImage, createVerticalSperator(1, 20), sphereImage, createVerticalSperator(1, 20), cylinderImage);
+
+        return shapeRow;
+    }
+
+    private HBox getRowOfSizes(){
+
+        Image image = new Image(getClass().getResourceAsStream("/cube.png"));
+
+        ImageView smallImage = new ImageView(image);
+        ImageView mediumImage = new ImageView(image);
+        ImageView largeImage = new ImageView(image);
+        int index = 0;
+
+        for(ImageView imageView : List.of(smallImage, mediumImage, largeImage)){
+            imageView.setScaleX(Size.getSize(index).getFactor());
+            imageView.setScaleY(Size.getSize(index++).getFactor());
+            imageView.setFitWidth(25);
+            imageView.setFitHeight(25);
+            imageView.setPreserveRatio(true);
+        }
+
+        HBox shapeRow = new HBox(3);
+        shapeRow.setAlignment(Pos.CENTER);
+        shapeRow.setPadding(new Insets(0, 3, 0, 3));
+
+        shapeRow.getChildren().addAll(smallImage, createVerticalSperator(1, 20), mediumImage, createVerticalSperator(1, 20), largeImage);
+
+        return shapeRow;
     }
 }

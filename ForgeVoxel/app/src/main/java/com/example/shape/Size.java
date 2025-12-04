@@ -3,9 +3,9 @@ package com.example.shape;
 import com.example.TextEditor.Interpreter.interpreter.RuntimeError;
 
 public enum Size {
-    LARGE(1.0),
+    SMALL(0.25),
     MEDIUM(0.625),
-    SMALL(0.25);
+    LARGE(1.0);
 
     private double factor;
 

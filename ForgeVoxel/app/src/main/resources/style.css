@@ -1,8 +1,33 @@
-.keyword    { -fx-fill: blue; -fx-font-weight: bold; }
-.literal    { -fx-fill: darkblue; -fx-font-weight: bold; }
-.function   { -fx-fill: darkmagenta; -fx-font-weight: bold; }
-.identifier { -fx-fill: black; }
-.number     { -fx-fill: darkorange; }
-.comment    { -fx-fill: green; -fx-font-style: italic; }
-.paren      { -fx-fill: purple; }
-.bracket    { -fx-fill: purple; }
+
+.code-editor {
+    -fx-background-color: #1f1f1f;
+    -fx-fill: rgb(204, 204, 204);
+    -fx-caret-color: #ffcc00;
+    -fx-highlight-fill: #4b6eaf;
+    -fx-highlight-text-fill: #ffffff;
+    -fx-font-family: "Block Craft Medium";
+    -fx-font-size: 18px;
+}
+
+.code-editor .caret {
+    -fx-stroke: #ffcc00; 
+}
+
+.code-editor .selection {
+    -fx-fill: #4b6eaf; 
+}
+
+.grid-pane {
+    -fx-background-color: rgb(49,49,49);
+}
+
+
+.keyword    { -fx-fill: rgb(201, 146, 164); -fx-font-family: "Block Craft Medium";}
+.literal    { -fx-fill: rgb(181, 206, 168); -fx-font-family: "Block Craft Medium";}
+.function   { -fx-fill: rgb(220, 220, 170); -fx-font-family: "Block Craft Medium";}
+.identifier { -fx-fill: rgb(156, 220, 254); -fx-font-family: "Block Craft Medium";}
+.number     { -fx-fill: rgb(204, 167, 0); -fx-font-family: "Block Craft Medium";}
+.comment    { -fx-fill: rgb(106, 153, 85); -fx-font-style: italic; -fx-font-family: "Block Craft Medium";}
+.paren      { -fx-fill: rgb(218, 112, 214); -fx-font-family: "Block Craft Medium";}
+.bracket    { -fx-fill: rgb(218, 112, 214); -fx-font-family: "Block Craft Medium";}
+.default    { -fx-fill: rgb(199, 199, 199); -fx-font-family: "Block Craft Medium";}

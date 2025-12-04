@@ -47,14 +47,14 @@ public class Highlighter {
                 : matcher.group("BRACES") != null ? "bracket"
                 : matcher.group("COMMENT") != null ? "comment"
                 : matcher.group("NUMBER") != null ? "number"
-                : null;
+                : "default";
 
-            styleSpansBuilder.add(Collections.emptyList(), matcher.start() - end);
+            styleSpansBuilder.add(Collections.singleton("default"), matcher.start() - end);
             styleSpansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
             end = matcher.end();
         }
 
-        styleSpansBuilder.add(Collections.emptyList(), text.length() - end);
+        styleSpansBuilder.add(Collections.singleton("default"), text.length() - end);
         return styleSpansBuilder.create();
     }
 }
