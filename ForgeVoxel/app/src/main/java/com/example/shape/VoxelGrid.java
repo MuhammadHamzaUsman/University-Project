@@ -2,15 +2,30 @@ package com.example.shape;
 
 import com.example.TextEditor.Interpreter.interpreter.RuntimeError;
 import com.jme3.app.SimpleApplication;
+import com.jme3.asset.AssetManager;
+import com.jme3.math.ColorRGBA;
 import com.jme3.scene.Node;
 
 public class VoxelGrid {
+    private SimpleApplication app;
+    private Gizmo gizmo;
+
     private int height;
     private int width;
     private int depth;
     private Voxel[][][] grid;
     private Node gridNode;
     private String name;
+
+    private int xLimit;
+    private int yLimit;
+    private int zLimit;
+
+    private int xDrawLimit;
+    private int yDrawLimit;
+    private int zDrawLimit;
+    
+    private Node border;
 
     public VoxelGrid(int width, int height, int depth, String name) {
         this.height = height;
@@ -19,40 +34,58 @@ public class VoxelGrid {
         this.grid = new Voxel[depth][height][width];
         this.name = (name == null) ? String.format("User-%d-%d-%d", width, height, depth) : name;
         this.gridNode = new Node(this.name);
-        this.gridNode.setLocalTranslation(
-            0 - (float)(width * Voxel.UNIT_SIZE) / 2, 
-            0 - (float)(height * Voxel.UNIT_SIZE) / 2, 
-            0 - (float)(depth * Voxel.UNIT_SIZE) / 2
-        );
+        this.gridNode.setLocalTranslation(0, 0, 0);
+
+        xLimit = width / 2;
+        yLimit = height / 2;
+        zLimit = depth / 2;
+
+        xDrawLimit = width;
+        yDrawLimit = height;
+        zDrawLimit = depth;
+    }
+
+    public void setApp(SimpleApplication app){
+        this.app = app;
+    }
+
+    public void intializeBorder(AssetManager assetManager) {
+        float borderWidth = (float)((width * Voxel.UNIT_SIZE) * 1.02);
+        float borderHeight = (float)((height * Voxel.UNIT_SIZE) * 1.02);
+        float borderDepth = (float)((depth * Voxel.UNIT_SIZE) * 1.02);
+
+        border = Voxel.getborder("GridBorder", borderWidth, borderHeight, borderDepth, 0.08f, ColorRGBA.fromRGBA255(68, 75, 78, 255), assetManager);
+        
+        gridNode.attachChild(border);
     }
 
     public void draw(){
-        for (Voxel[][] voxelsPlane : grid) {
-            for (Voxel[] voxelsArray : voxelsPlane) {
-                for (Voxel voxel : voxelsArray) {
+        Voxel voxel;
+
+        for (int z = 0; z < zDrawLimit; z++) {
+            for (int y = 0; y < yDrawLimit; y++) {
+                for (int x = 0; x < xDrawLimit; x++) {
+                    voxel = grid[z][y][x];
                     if(voxel != null){voxel.draw(gridNode);}
                 }
             }
         }
-        
-        this.gridNode.setLocalTranslation(
-            0 - (float)(width * Voxel.UNIT_SIZE) / 2, 
-            0 - (float)(height * Voxel.UNIT_SIZE) / 2, 
-            0 - (float)(depth * Voxel.UNIT_SIZE) / 2
-        );
+
+        gridNode.attachChild(border);
+        if(gizmo != null) {gridNode.attachChild(gizmo.getGizmoNode());}
     }
 
     public void placeVoxels(VoxelGridInterface function){
         for (int z = 0; z < depth; z++) {
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    grid[z][y][x] = function.determineVoxel(x, y, z, 0);
+                    grid[z][y][x] = function.determineVoxel(x - xLimit, y - yLimit, z - zLimit, 0);
                 }
             }
         }
     }
 
-    public void updateGrid(VoxelGridInterface function, SimpleApplication app){
+    public void updateGrid(VoxelGridInterface function){
         // data update
         grid = new Voxel[depth][height][width];
         placeVoxels(function);
@@ -66,6 +99,30 @@ public class VoxelGrid {
             }
         );
     } 
+
+    public int getxLimit() {
+        return xLimit;
+    }
+
+    public void setxLimit(int xLimit) {
+        this.xLimit = xLimit;
+    }
+
+    public int getyLimit() {
+        return yLimit;
+    }
+
+    public void setyLimit(int yLimit) {
+        this.yLimit = yLimit;
+    }
+
+    public int getzLimit() {
+        return zLimit;
+    }
+
+    public void setzLimit(int zLimit) {
+        this.zLimit = zLimit;
+    }
 
     public int getHeight() {
         return height;
@@ -132,5 +189,52 @@ public class VoxelGrid {
         }
 
         return ((double) matchingCube) / (width * depth * height);
+    }
+
+    public void setXDrawLimit(int x){
+        x += 2;
+        
+        xDrawLimit = Math.clamp(x, 0, width);
+        // visual update
+        app.enqueue(
+            () -> {
+                gridNode.detachAllChildren();
+                draw();
+                return null;
+            }
+        );
+    }
+
+    public void setYDrawLimit(int y){
+        y += 2;
+        
+        yDrawLimit = Math.clamp(y, 0, height);
+        // visual update
+        app.enqueue(
+            () -> {
+                gridNode.detachAllChildren();
+                draw();
+                return null;
+            }
+        );
+    }
+
+    public void setZDrawLimit(int z){
+        z += 2;
+        
+        zDrawLimit = Math.clamp(z, 0, depth);
+        // visual update
+        app.enqueue(
+            () -> {
+                gridNode.detachAllChildren();
+                draw();
+                return null;
+            }
+        );
+    }
+
+    public void addGizmo(Gizmo gizmo) {
+        this.gizmo = gizmo;
+        this.gridNode.attachChild(gizmo.getGizmoNode());
     }
 }

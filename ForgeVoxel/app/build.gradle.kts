@@ -1,5 +1,6 @@
 plugins {
     java
+    application
     id("org.openjfx.javafxplugin") version "0.1.0"
 }
 
@@ -12,6 +13,10 @@ javafx {
     )
 }
 
+application {
+    mainClass.set("com.example.App") 
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
@@ -19,15 +24,17 @@ java {
 
 repositories {
     mavenCentral()
+    maven("https://repo.jmonkeyengine.org/releases")
 }
 
-val jmeVer = "3.7.0-stable"
+val jmeVer = "3.8.1-stable"
 
 dependencies {
 
     implementation("org.jmonkeyengine:jme3-core:$jmeVer")
     implementation("org.jmonkeyengine:jme3-desktop:$jmeVer")
     implementation("org.jmonkeyengine:jme3-lwjgl3:$jmeVer")
+    implementation("org.jmonkeyengine:jme3-plugins:$jmeVer")
 
     implementation("org.fxmisc.richtext:richtextfx:0.11.7")
 

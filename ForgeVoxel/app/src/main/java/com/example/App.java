@@ -5,61 +5,41 @@ package com.example;
 
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.fxmisc.flowless.VirtualizedScrollPane;
-import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.LineNumberFactory;
 import org.lwjgl.glfw.GLFW;
 
-import com.example.TextEditor.Interpreter.Highlighter;
+import com.example.TextEditor.Interpreter.CodeEditorUI;
 import com.example.TextEditor.Interpreter.interpreter.RuntimeError;
 import com.example.shape.Colors;
 import com.example.shape.Cube;
+import com.example.shape.Gizmo;
+import com.example.shape.GizmoState;
 import com.example.shape.MaterialEnum;
 import com.example.shape.OrbitCamera;
 import com.example.shape.Puzzel;
-import com.example.shape.Shape;
 import com.example.shape.Size;
-import com.example.shape.Sphere;
 import com.example.shape.Voxel;
 import com.example.shape.VoxelGrid;
 import com.example.shape.VoxelGridInterface;
 
 import com.jme3.app.SimpleApplication;
+import com.jme3.asset.plugins.FileLocator;
 import com.jme3.light.AmbientLight;
 import com.jme3.light.DirectionalLight;
+import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.Camera;
 import com.jme3.renderer.ViewPort;
+import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
+import com.jme3.scene.shape.Quad;
 import com.jme3.shadow.DirectionalLightShadowRenderer;
 import com.jme3.shadow.EdgeFilteringMode;
 import com.jme3.system.SystemListener;
 import com.jme3.system.lwjgl.LwjglWindow;
 
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.TextArea;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import javafx.util.Duration;
 
 public class App extends SimpleApplication implements SystemListener{
     public String getGreeting() {
@@ -70,17 +50,12 @@ public class App extends SimpleApplication implements SystemListener{
     public void destroy() {
         super.destroy();
         
-        // Close the JavaFX editor stage safely
-        Platform.runLater(() -> {
-            if (editorStage != null) {
-                editorStage.close();
-            }
-            Platform.exit(); // finally exit JavaFX
-        });
+        Platform.runLater(() -> { if(codeEditorUI != null){codeEditorUI.close();} });
     }
 
     public static void main(String[] args) {
         javafx.application.Platform.startup(() -> {});
+
         App app = new App();
         app.start();
         // javafx.application.Platform.exit();
@@ -89,18 +64,25 @@ public class App extends SimpleApplication implements SystemListener{
     // code Editor
     private Node topRootNode;
     private Node bottomRootNode;
-    private CodeArea codeEditor;
-    private String code;
-    private TextArea errorDisplay;
-    private Stage editorStage; 
+    private CodeEditorUI codeEditorUI;
+    private OrbitCamera topOrbitCamera;
+    private OrbitCamera bottomOrbitCamera;
+    private Gizmo topGizmo;
+    private Gizmo bottomGizmo;
+
     private Future<?> errorCheck = null;
-    private PauseTransition codeRunDelay = new PauseTransition(Duration.seconds(2));
     private Puzzel puzzel;
 
     @Override
     public void simpleInitApp() {
-        // stacking two screens
+        assetManager.registerLocator("app/assets/", FileLocator.class);
 
+        viewPort.setBackgroundColor(ColorRGBA.fromRGBA255(3 ,3, 3, 255));
+        flyCam.setEnabled(false);
+        inputManager.setCursorVisible(true);
+        setPauseOnLostFocus(false);
+
+        // stacking two screens
         topRootNode = new Node("top");
         bottomRootNode = new Node("bottom");
 
@@ -110,7 +92,7 @@ public class App extends SimpleApplication implements SystemListener{
         topCam.setViewPort(0.5f, 1f, 0.5f, 1f);
 
         ViewPort topViewPort = renderManager.createMainView("TopViewPort", topCam);
-        topViewPort.setBackgroundColor(ColorRGBA.fromRGBA255(246, 242, 232, 255));
+        topViewPort.setBackgroundColor(ColorRGBA.fromRGBA255(2 ,2, 2, 255).mult(1.15f));
         topViewPort.setClearFlags(true, true, true);
         topViewPort.attachScene(topRootNode);
 
@@ -120,7 +102,7 @@ public class App extends SimpleApplication implements SystemListener{
         bottomCam.setViewPort(0.5f, 1f, 0f, 0.5f);
 
         ViewPort bottomViewPort = renderManager.createMainView("BottomViewPort", bottomCam);
-        bottomViewPort.setBackgroundColor(ColorRGBA.fromRGBA255(246, 242, 232, 255));
+        bottomViewPort.setBackgroundColor(ColorRGBA.fromRGBA255(2 ,2, 2, 255).mult(1.15f));
         bottomViewPort.setClearFlags(true, true, true);
         bottomViewPort.attachScene(bottomRootNode);
 
@@ -162,53 +144,56 @@ public class App extends SimpleApplication implements SystemListener{
 
         bottomViewPort.addProcessor(bottomShadowRenderer);
 
+        addBorder(0.5f, 1f, 0.5f, 1f , 8, 6, ColorRGBA.fromRGBA255(50, 50, 50, 255), ColorRGBA.fromRGBA255(144, 164, 174, 255));
+        addBorder(0.5f, 1f, 0f, 0.5f , 8, 6, ColorRGBA.fromRGBA255(50, 50, 50, 255), ColorRGBA.fromRGBA255(144, 164, 174, 255));
+
         VoxelGridInterface bottomFunc = new VoxelGridInterface() {
             @Override
             public Voxel determineVoxel(int x, int y, int z, int frame) {
                 if(y == 0 || y == 4){ 
-                    return new Cube(x, y, z, MaterialEnum.MATTE, Colors.values()[(x + y + z) % 5], Size.LARGE, assetManager); 
+                    return new Cube(x, y, z, MaterialEnum.MATTE, Colors.values()[((x + 2) + (y + 2) + (z + 2)) % 5], Size.LARGE, assetManager); 
                 }
                 return null;
             }
         };
 
+        VoxelGrid targetGrid = new VoxelGrid(5, 5, 5, "puzzel-1-target");
+        targetGrid.intializeBorder(assetManager);
+        targetGrid.setApp(this);
+        VoxelGrid userGrid = new VoxelGrid(5, 5, 5, "puzzel-1-user");
+        userGrid.intializeBorder(assetManager);
+        userGrid.setApp(this);
+
         puzzel = new Puzzel(
-            new VoxelGrid(5, 5, 5, "puzzel-1-target"), 
+            targetGrid, 
             bottomFunc,
-            new VoxelGrid(5, 5, 5, "puzzel-1-user"), 
+            userGrid, 
             "puzzel-1"
         );
-
+        
+        GizmoState sharedGizmoState = new GizmoState(puzzel.getWidth() / 2 + 1, puzzel.getHeight() / 2 + 1, puzzel.getDepth() / 2 + 1);
+        
+        topOrbitCamera = new OrbitCamera(topRootNode, topCam, inputManager, assetManager);
+        topGizmo = new Gizmo(userGrid, inputManager, topCam, sharedGizmoState);
+        topGizmo.intializeAxisBars(assetManager);
+        userGrid.addGizmo(topGizmo);
+        
+        bottomOrbitCamera = new OrbitCamera(bottomRootNode, bottomCam, inputManager, assetManager);
+        bottomGizmo = new Gizmo(targetGrid, inputManager, bottomCam, sharedGizmoState);
+        bottomGizmo.intializeAxisBars(assetManager);
+        targetGrid.addGizmo(bottomGizmo);
+        
         this.enqueue(() -> {
             puzzel.intializeTargetGrid(bottomRootNode);
             puzzel.intializeUserGrid(topRootNode);
         });
 
-        OrbitCamera topOrbitCamera = new OrbitCamera(topRootNode, topCam, inputManager);
-        OrbitCamera bottomOrbitCamera = new OrbitCamera(bottomRootNode, bottomCam, inputManager);
-
-        flyCam.setDragToRotate(true);
-        flyCam.setEnabled(false);
-        inputManager.setCursorVisible(true);
-        this.setPauseOnLostFocus(false);
-
-        codeRunDelay.setOnFinished(event -> runCode(code));
-
-        Platform.runLater( () -> { intializeCodeEditor();} );
+        codeEditorUI = new CodeEditorUI(this);
+        Platform.runLater(() -> { codeEditorUI.intializeUI(); });
 
         long windowHandle = ((LwjglWindow)getContext()).getWindowHandle();
-
         GLFW.glfwSetWindowPosCallback(windowHandle, 
-            (window, xpos, ypos) -> {
-                Platform.runLater(
-                    () -> {
-                        if(editorStage != null){
-                            editorStage.setX(xpos);
-                            editorStage.setY(ypos);
-                        }
-                    }
-                );
-            }
+            (window, xpos, ypos) -> { Platform.runLater( () -> { codeEditorUI.updatePosition(xpos, ypos); } ); }
         );
     }
 
@@ -222,234 +207,98 @@ public class App extends SimpleApplication implements SystemListener{
 
         if (errorCheck != null && errorCheck.isDone()) {
             try { errorCheck.get(); } 
-            catch (RuntimeError e) { Platform.runLater(() -> errorDisplay.setText(e.getMessage()) ); }
-            catch (Exception e) { Platform.runLater(() -> errorDisplay.setText(e.getMessage()) ); }
+            catch (RuntimeError e) { Platform.runLater(() -> codeEditorUI.updateErrorDisplay(e.getMessage()) ); }
+            catch (Exception e) { Platform.runLater(() -> codeEditorUI.updateErrorDisplay(e.getMessage()) ); }
 
             errorCheck = null;
         }
+
+        this.enqueue(
+            () -> {
+                topOrbitCamera.mouseHoverCheck();
+                topGizmo.updateSelector();
+
+                bottomOrbitCamera.mouseHoverCheck();
+                bottomGizmo.updateSelector();
+            }
+        );
     }
 
     @Override
     public void reshape(int w, int h) {
-        Platform.runLater(
-            () -> {
-                if(editorStage != null){
-                    editorStage.setWidth((int)(this.getContext().getSettings().get("Width")) / 2);
-                    editorStage.setHeight((int)(this.getContext().getSettings().get("Height")));
-                }
-            }
-        );
+        Platform.runLater( () -> { if(codeEditorUI != null) { codeEditorUI.updateSize(w, h); } } );
     }
 
-    private void runCode(String newCode){
-        try {
-            errorCheck = this.enqueue(
-                () -> { 
-                    try {
-                        puzzel.updateUserGrid(newCode, this);
+    private void addBorder(float x1, float x2, float y1, float y2, float thickness, float centerThickness, ColorRGBA color, ColorRGBA centerColor) {
+        float screenWidth = settings.getWindowWidth();
+        float screenHeight = settings.getWindowHeight();
 
-                        errorDisplay.setText("");
-                    } 
-                    catch (RuntimeError r) { errorDisplay.setText(r.getMessage()); } 
-                    catch (Exception e) { errorDisplay.setText("Syntax Error: " + e.getMessage()); }
-                    return null;
-                }
-            );
-
-            errorDisplay.setText("");
-        } 
-        catch (RuntimeError r) { errorDisplay.setText(r.getMessage());} 
-        catch (Exception e) { errorDisplay.setText("Syntax Error: " + e.getMessage());}
-    }
-
-    public void intializeCodeEditor(){
-        codeEditor = new CodeArea();
-        codeEditor.setParagraphGraphicFactory(LineNumberFactory.get(codeEditor));
-        codeEditor.getStyleClass().add("code-editor");
+        float x1Screen = x1 * screenWidth;
+        float y1Screen = y1 * screenHeight; 
+        float x2Screen = x2 * screenWidth;
+        float y2Screen = y2 * screenHeight; 
         
-        errorDisplay = new TextArea();
-        errorDisplay.setEditable(false);
-        errorDisplay.setWrapText(true);
-        errorDisplay.setPrefHeight(70);
-        errorDisplay.setStyle(
-            "-fx-control-inner-background: #2b2b2b;" +
-            "-fx-font-family: Consolas;" +
-            "-fx-text-fill: red;" +
-            "-fx-font-size: 14px;"
-        );
-        
-        codeEditor.textProperty().addListener((obs, oldText, newText) -> {
-            code = newText;
-            codeEditor.setStyleSpans(0, Highlighter.highlight(code));
-            codeRunDelay.stop();
-            codeRunDelay.play();
-        });
+        float width = x2Screen - x1Screen;
+        float height = y2Screen - y1Screen; 
 
-        addListenerToCodeEditor();
+        float deltaThickness = thickness - centerThickness;
+        float centerWidth = width - deltaThickness;
+        float centerHeight = height - deltaThickness;
 
-        GridPane propertiesGrid = new GridPane();
-        propertiesGrid.setPrefSize(settings.getWindowWidth(), 50);
-        propertiesGrid.getStyleClass().add("grid-pane");
+        float topY = y2Screen - thickness;
+        float rightX = x2Screen - thickness;
 
-        int colorCol = addColorsToUI(propertiesGrid)[0];
-        HBox shapeRow = getRowOfShapes();
-        HBox sizeRow = getRowOfSizes();
-        
-        propertiesGrid.add(shapeRow, colorCol, 0);
-        propertiesGrid.add(sizeRow, colorCol, 1);
+        Geometry topBar = new Geometry("topBar", new Quad(width, thickness));
+        Geometry rightBar = new Geometry("rightBar", new Quad(thickness, height));
+        Geometry bottomBar = new Geometry("bottomBar", new Quad(width, thickness));
+        Geometry leftBar = new Geometry("leftBar", new Quad(thickness, height));
 
+        topBar.setLocalTranslation(x1Screen, topY, 0);
+        rightBar.setLocalTranslation(x2Screen - thickness, y1Screen, 0);
+        bottomBar.setLocalTranslation(x1Screen, y1Screen, 0);
+        leftBar.setLocalTranslation(x1Screen, y1Screen, 0);
 
-        // ui
-        VirtualizedScrollPane<CodeArea> vsPane = new VirtualizedScrollPane<>(codeEditor);
+        Material material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        material.setColor("Color", color);
 
-        VBox layout = new VBox(vsPane, errorDisplay, propertiesGrid);
-        VBox.setVgrow(vsPane, Priority.ALWAYS);
-
-        Font font = Font.loadFont(
-            getClass().getResourceAsStream("/BlockCraftMedium-PVLzd.otf"),
-            14
-        );
-
-        Scene scene = new Scene(layout);
-        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-
-        editorStage = new Stage(StageStyle.UNDECORATED);
-        editorStage.setScene(scene);
-        editorStage.setAlwaysOnTop(true);
-
-        editorStage.setWidth(settings.getWidth() / 2.0);
-        editorStage.setHeight(settings.getHeight());
-
-        long windowHandle = ((LwjglWindow)getContext()).getWindowHandle();
-
-        int x[] = new int[1];
-        int y[] = new int[1];
-        GLFW.glfwGetWindowPos(windowHandle, x, y);
-        
-        editorStage.setX(x[0]);
-        editorStage.setY(y[0]);
-
-        editorStage.show();
-    }
-
-    private void addListenerToCodeEditor(){
-        codeEditor.addEventHandler(
-            KeyEvent.KEY_TYPED, e -> {
-                String character = e.getCharacter();
-                int caret = codeEditor.getCaretPosition();
-
-                switch (character) {
-                    case "(": 
-                        codeEditor.insertText(caret, ")"); 
-                        codeEditor.moveTo(caret); 
-                        break;
-                    case "{": 
-                        codeEditor.insertText(caret, "}"); 
-                        codeEditor.moveTo(caret); 
-                        break;
-                }
-            }
-        );
-
-        codeEditor.addEventHandler(
-            KeyEvent.KEY_PRESSED, e -> {
-                int caret = codeEditor.getCaretPosition();
-
-                if(e.getCode() == KeyCode.TAB) {
-                    e.consume();
-                    codeEditor.replaceText(caret - 1, caret, "    ");
-                }
-
-                if(e.getCode() == KeyCode.ENTER) {
-                    Pattern whiteSpace = Pattern.compile("^\\s+");
-                    int currentParagraph = codeEditor.getCurrentParagraph();
-                    if (currentParagraph > 0) {
-                        String previousLine = codeEditor.getParagraph(currentParagraph - 1).getText();
-                        
-                        Matcher m = whiteSpace.matcher(previousLine);
-                        if (m.find()) {
-                            String indentation = m.group();
-                            codeEditor.insertText(codeEditor.getCaretPosition(), indentation);
-                            e.consume();
-                        }
-                    }
-                }
-            }
-        );
-    }
-
-    private int[] addColorsToUI(GridPane grid){
-        int numColors = Colors.values().length;
-
-        double colorRow = 2;
-        int colorCol = (int)Math.ceil(numColors / colorRow);
-        int index = 0;
-        int xGrid = 0, yGrid = 0;
-        Rectangle backRectangle;
-
-        while (index < numColors) {
-            backRectangle = new Rectangle(25, 25, Colors.getColor(index++).getFxColor());
-            grid.add(backRectangle, xGrid++, yGrid);
-            
-            if(xGrid >= colorCol){ 
-                xGrid = 0;
-                yGrid++;
-            }
+        for(Geometry bar : List.of(topBar, rightBar, bottomBar, leftBar)){
+            bar.setMaterial(material);
+            guiNode.attachChild(bar);
         }
 
-        return new int []{colorCol, (int)colorRow};
-    }
+        Geometry topCenterBar = new Geometry("topCenterBar", new Quad(centerWidth, centerThickness));
+        Geometry rightCenterBar = new Geometry("rightCenterBar", new Quad(centerThickness, centerHeight));
+        Geometry bottomCenterBar = new Geometry("bottomCenterBar", new Quad(centerWidth, centerThickness));
+        Geometry leftCenterBar = new Geometry("leftCenterBar", new Quad(centerThickness, centerHeight));
 
-    private Rectangle createVerticalSperator(int width, int height){
-        Rectangle rect = new Rectangle(width, height);
-        rect.setFill(Color.rgb(79, 79, 79));
-        return rect;
-    }
+        float centerOffset = deltaThickness / 2;
 
-    private HBox getRowOfShapes(){
+        topCenterBar.setLocalTranslation(x1Screen + centerOffset, topY + centerOffset, 0);
+        rightCenterBar.setLocalTranslation(rightX + centerOffset, y1Screen + centerOffset, 0);
+        bottomCenterBar.setLocalTranslation(x1Screen + centerOffset, y1Screen + centerOffset, 0);
+        leftCenterBar.setLocalTranslation(x1Screen + centerOffset, y1Screen + centerOffset, 0);
 
-        ImageView cubeImage = new ImageView(new Image(getClass().getResourceAsStream("/cube.png")));
-        ImageView sphereImage = new ImageView(new Image(getClass().getResourceAsStream("/sphere.png")));
-        ImageView cylinderImage = new ImageView(new Image(getClass().getResourceAsStream("/cylinder.png")));     
+        Material materialCenter = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        materialCenter.setColor("Color", centerColor);
 
-        for(ImageView imageView : List.of(cubeImage, sphereImage, cylinderImage)){
-            imageView.setFitWidth(25);
-            imageView.setFitHeight(25);
-            imageView.setPreserveRatio(true);
+        for(Geometry bar : List.of(topCenterBar, rightCenterBar, bottomCenterBar, leftCenterBar)){
+            bar.setMaterial(materialCenter);
+            guiNode.attachChild(bar);
         }
-
-        HBox shapeRow = new HBox(3);
-        shapeRow.setAlignment(Pos.CENTER);
-        shapeRow.setPadding(new Insets(0, 3, 0, 3));
-
-        shapeRow.getChildren().addAll(cubeImage, createVerticalSperator(1, 20), sphereImage, createVerticalSperator(1, 20), cylinderImage);
-
-        return shapeRow;
     }
 
-    private HBox getRowOfSizes(){
+    public void runCode(String newCode){
+        errorCheck = this.enqueue(
+            () -> { 
+                try {
+                    puzzel.updateUserGrid(newCode, this);
 
-        Image image = new Image(getClass().getResourceAsStream("/cube.png"));
-
-        ImageView smallImage = new ImageView(image);
-        ImageView mediumImage = new ImageView(image);
-        ImageView largeImage = new ImageView(image);
-        int index = 0;
-
-        for(ImageView imageView : List.of(smallImage, mediumImage, largeImage)){
-            imageView.setScaleX(Size.getSize(index).getFactor());
-            imageView.setScaleY(Size.getSize(index++).getFactor());
-            imageView.setFitWidth(25);
-            imageView.setFitHeight(25);
-            imageView.setPreserveRatio(true);
-        }
-
-        HBox shapeRow = new HBox(3);
-        shapeRow.setAlignment(Pos.CENTER);
-        shapeRow.setPadding(new Insets(0, 3, 0, 3));
-
-        shapeRow.getChildren().addAll(smallImage, createVerticalSperator(1, 20), mediumImage, createVerticalSperator(1, 20), largeImage);
-
-        return shapeRow;
+                    codeEditorUI.updateErrorDisplay("");
+                } 
+                catch (RuntimeError r) { codeEditorUI.updateErrorDisplay(r.getMessage()); } 
+                catch (Exception e) { codeEditorUI.updateErrorDisplay("Syntax Error: " + e.getMessage()); }
+                return null;
+            }
+        );
     }
 }

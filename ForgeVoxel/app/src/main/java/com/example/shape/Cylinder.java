@@ -29,7 +29,7 @@ public class Cylinder extends Voxel{
 
         com.jme3.scene.shape.Cylinder cylinderShape = new com.jme3.scene.shape.Cylinder(50, 50, (float)(dimension), (float)(dimension * 2), true);
         this.cylinder = new Geometry(
-            String.format("Sphere: %d, %d, %d", x, y, z),
+            String.format("Voxel-Sphere: %d, %d, %d", x, y, z),
             cylinderShape
         );
         this.cylinder.setMaterial(this.material);

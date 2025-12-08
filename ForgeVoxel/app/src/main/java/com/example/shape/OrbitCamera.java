@@ -2,17 +2,24 @@ package com.example.shape;
 
 import java.util.Map;
 
+import com.jme3.asset.AssetManager;
+import com.jme3.collision.CollisionResults;
 import com.jme3.input.InputManager;
+import com.jme3.input.KeyInput;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.AnalogListener;
+import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseAxisTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
+import com.jme3.math.Ray;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.Camera;
 import com.jme3.scene.CameraNode;
+import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 
 public class OrbitCamera {
@@ -21,6 +28,8 @@ public class OrbitCamera {
     private Node pivotHorz;
     private Node pivotVert;
     private Node cameraNode;
+    private Camera camera;
+    private Node rootNode;
 
     private double radius = 10.0;
     private double zoomInLimit = 5;
@@ -35,6 +44,9 @@ public class OrbitCamera {
     private double rotationFactor = 0.01;
     private double horizontalAngle = 0;
     private double verticalAngle = FastMath.PI / 2;
+    private Node highlight;
+
+    private boolean isSHIFTPrressed;
 
     private static class InputHolder{
         int mouseInput;
@@ -55,11 +67,14 @@ public class OrbitCamera {
         Map.entry("Vert-", new InputHolder(MouseInput.AXIS_Y, false))
     );
 
-    public OrbitCamera(Node rootNode, Camera cam, InputManager inputManager){
+    public OrbitCamera(Node rootNode, Camera cam, InputManager inputManager, AssetManager assetManager){
         this.inputManager = inputManager;
+        this.camera = cam;
+        this.rootNode = rootNode;
+        this.highlight = Voxel.getVoxelUnitBorder(assetManager);
 
-        cam.setLocation(new Vector3f(0f, 0f, (float)radius));
-        cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
+        camera.setLocation(new Vector3f(0f, 0f, (float)radius));
+        camera.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
 
         pivotHorz = new Node("PivotHorz");
         pivotHorz.setLocalTranslation(Vector3f.ZERO);
@@ -69,7 +84,7 @@ public class OrbitCamera {
         pivotVert.setLocalTranslation(Vector3f.ZERO);
         pivotHorz.attachChild(pivotVert);
 
-        cameraNode = new CameraNode("CameraNode", cam);
+        cameraNode = new CameraNode("CameraNode", camera);
         cameraNode.setLocalTranslation(new Vector3f(0, 0, (float)radius));
         pivotVert.attachChild(cameraNode);
         addInputs();
@@ -85,6 +100,7 @@ public class OrbitCamera {
         }
         
         if(!inputManager.hasMapping("LeftClick")){ inputManager.addMapping("LeftClick", new MouseButtonTrigger( MouseInput.BUTTON_LEFT));}
+        if(!inputManager.hasMapping("SHIFT")){ inputManager.addMapping("SHIFT", new KeyTrigger(KeyInput.KEY_LSHIFT));}
         
         inputManager.addListener(
             new AnalogListener() {
@@ -137,7 +153,7 @@ public class OrbitCamera {
             new AnalogListener() {
                 @Override
                 public void onAnalog(String name, float value, float tpf) {
-                    if(!isRotating) return;
+                    if(!isRotating || !isSHIFTPrressed) return;
 
                     horizontalAngle = anchorAngleX + (inputManager.getCursorPosition().y - anchorY) * rotationFactor;
                     verticalAngle = anchorAngleY - (inputManager.getCursorPosition().x - anchorX) * rotationFactor;
@@ -151,5 +167,50 @@ public class OrbitCamera {
             new String[]{"Horiz+", "Horiz-", "Vert+", "Vert-"}
         );
 
+        inputManager.addListener(
+            new ActionListener() {
+                @Override
+                public void onAction(String name, boolean isPressed, float tpf) {
+                    if(name.equals("SHIFT")){
+                        if(isPressed){ isSHIFTPrressed = true;}
+                        else{ isSHIFTPrressed = false;}
+                    }
+                }
+            }, 
+        "SHIFT"
+        );
+    }
+
+    Geometry highlightedVoxel = null;
+    public void mouseHoverCheck(){
+        Vector2f mousePos = inputManager.getCursorPosition();
+        Vector3f origin = camera.getWorldCoordinates(mousePos, 0f);
+        Vector3f destination = camera.getWorldCoordinates(mousePos, 1f).subtract(origin).normalizeLocal();
+        Ray ray = new Ray(origin, destination);
+
+        CollisionResults collisions = new CollisionResults();
+        rootNode.collideWith(ray, collisions);
+
+        Geometry geom;
+        if(collisions.size() >= 1){
+            geom = collisions.getClosestCollision().getGeometry();
+
+            if(geom.getName().contains("Voxel-")){
+                if(geom != highlightedVoxel){
+                    highlightedVoxel = geom;
+                    
+                    highlight.setLocalTranslation(highlightedVoxel.getLocalTranslation());
+                    rootNode.attachChild(highlight);
+                }
+            }
+            else{
+                rootNode.detachChildNamed(Voxel.HIGHLIGHT);
+                highlightedVoxel = null;
+            }
+        }
+        else{
+            rootNode.detachChildNamed(Voxel.HIGHLIGHT);
+            highlightedVoxel = null;
+        }
     }
 }

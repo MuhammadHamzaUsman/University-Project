@@ -34,10 +34,12 @@ public class Puzzel {
     private Interpreter interpreter;
 
     public Puzzel(VoxelGrid targetGrid, VoxelGridInterface targetGridFunction, VoxelGrid userGrid, String name) {
-        
+
         if(!userGrid.isSizeSame(targetGrid)){
             throw new IllegalArgumentException("Grids does not have same size");
         }
+        validateGrid(userGrid);
+        validateGrid(targetGrid);
 
         this.targetGridFunction = targetGridFunction;
         this.targetGrid = targetGrid;
@@ -108,7 +110,7 @@ public class Puzzel {
                 Value value = interpreter.executeProgram(program);
 
                 return getVoxelFromValue(x, y, z, value, app);
-            }, app
+            }
         );
 
         updateCompletion();
@@ -247,5 +249,13 @@ public class Puzzel {
 
     public void setInterpreter(Interpreter interpreter) {
         this.interpreter = interpreter;
+    }
+
+    private static void validateGrid(VoxelGrid grid){
+        if(grid.getWidth() % 2 == 1) 
+            if(grid.getHeight() % 2 == 1)
+                if(grid.getDepth() % 2 == 1) return;
+
+        throw new IllegalArgumentException("Grid must be of odd Size: " + grid.getWidth() + "x" + grid.getHeight() + "x" + grid.getDepth());
     }
 }

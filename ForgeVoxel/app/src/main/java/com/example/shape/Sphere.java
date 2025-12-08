@@ -26,7 +26,7 @@ public class Sphere extends Voxel{
 
         com.jme3.scene.shape.Sphere sphereShape = new com.jme3.scene.shape.Sphere(50, 50, (float)(dimension));
         this.sphere = new Geometry(
-            String.format("Sphere: %d, %d, %d", x, y, z),
+            String.format("Voxel-Sphere: %d, %d, %d", x, y, z),
             sphereShape
         );
         this.sphere.setMaterial(this.material);

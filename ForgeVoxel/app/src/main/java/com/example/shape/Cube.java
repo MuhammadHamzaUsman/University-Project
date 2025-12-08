@@ -33,7 +33,7 @@ public class Cube extends Voxel{
 
         Box cubeShape = new Box((float)(dimension / 2), (float)(dimension / 2), (float)(dimension / 2));
         this.cube = new Geometry(
-            String.format("Box: %d, %d, %d", x, y, z),
+            String.format("Voxel-Cube: %d, %d, %d", x, y, z),
             cubeShape
         );
         this.cube.setMaterial(this.material);
