@@ -2,11 +2,22 @@ package com.example.TextEditor.Interpreter.statements;
 
 import java.util.Arrays;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class FunctionDecalarationStatement extends Statement{
+    
+    @JsonProperty("name")
     private String name;
+    
+    @JsonProperty("parameters")
     private String[] parameters;
+    
+    @JsonProperty("body")
     private Statement[] body;
     
+    public FunctionDecalarationStatement() {
+    }
+
     public FunctionDecalarationStatement(String name, String[] parameters, Statement[] body) {
         this.name = name;
         this.parameters = parameters;

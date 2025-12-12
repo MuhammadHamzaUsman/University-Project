@@ -1,11 +1,20 @@
 package com.example.TextEditor.Interpreter.statements;
 
 import com.example.TextEditor.Interpreter.tokens.Operators;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class AssignmentExpression extends ExpressionStatement {
+    
+    @JsonProperty("assignee")
     private ExpressionStatement assignee;
+    
+    @JsonProperty("value")
     private ExpressionStatement value;
+    
+    @JsonProperty("operator")
     private Operators operator;
+
+    public AssignmentExpression(){}
 
     public AssignmentExpression(ExpressionStatement assignee, ExpressionStatement value, Operators operator) {
         this.assignee = assignee;

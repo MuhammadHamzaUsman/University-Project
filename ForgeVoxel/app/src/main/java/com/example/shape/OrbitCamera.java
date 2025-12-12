@@ -2,6 +2,7 @@ package com.example.shape;
 
 import java.util.Map;
 
+import com.example.App;
 import com.jme3.asset.AssetManager;
 import com.jme3.collision.CollisionResults;
 import com.jme3.input.InputManager;
@@ -45,6 +46,7 @@ public class OrbitCamera {
     private double horizontalAngle = 0;
     private double verticalAngle = FastMath.PI / 2;
     private Node highlight;
+    private App app;
 
     private boolean isSHIFTPrressed;
 
@@ -67,11 +69,12 @@ public class OrbitCamera {
         Map.entry("Vert-", new InputHolder(MouseInput.AXIS_Y, false))
     );
 
-    public OrbitCamera(Node rootNode, Camera cam, InputManager inputManager, AssetManager assetManager){
+    public OrbitCamera(Node rootNode, Camera cam, App app, InputManager inputManager, AssetManager assetManager){
         this.inputManager = inputManager;
         this.camera = cam;
         this.rootNode = rootNode;
         this.highlight = Voxel.getVoxelUnitBorder(assetManager);
+        this.app = app;
 
         camera.setLocation(new Vector3f(0f, 0f, (float)radius));
         camera.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
@@ -191,26 +194,44 @@ public class OrbitCamera {
         CollisionResults collisions = new CollisionResults();
         rootNode.collideWith(ray, collisions);
 
-        Geometry geom;
-        if(collisions.size() >= 1){
-            geom = collisions.getClosestCollision().getGeometry();
-
-            if(geom.getName().contains("Voxel-")){
-                if(geom != highlightedVoxel){
-                    highlightedVoxel = geom;
-                    
-                    highlight.setLocalTranslation(highlightedVoxel.getLocalTranslation());
-                    rootNode.attachChild(highlight);
-                }
-            }
-            else{
+        if(collisions.size() == 0){
+            if(highlightedVoxel != null){
                 rootNode.detachChildNamed(Voxel.HIGHLIGHT);
                 highlightedVoxel = null;
+                app.codeEditorUiGeomDisplayReset();
             }
+
+            return;
         }
-        else{
-            rootNode.detachChildNamed(Voxel.HIGHLIGHT);
-            highlightedVoxel = null;
+
+        Geometry geom = collisions.getClosestCollision().getGeometry();
+
+        if(!geom.getName().contains("Voxel-")){
+            if(highlightedVoxel != null){
+                rootNode.detachChildNamed(Voxel.HIGHLIGHT);
+                highlightedVoxel = null;
+                app.codeEditorUiGeomDisplayReset();
+            }
+
+            return;
         }
+
+        
+        if(geom != highlightedVoxel){
+            highlightedVoxel = geom;
+            
+            if(highlight.getParent() == null)rootNode.attachChild(highlight);
+            
+            highlight.setLocalTranslation(highlightedVoxel.getLocalTranslation());
+            app.codeEditorUiGeomDisplay(geom.getName());
+        }
+    }
+
+    public Node getOrbitCameraNode(){
+        return pivotHorz;
+    }
+
+    public void intializeInfo(){
+
     }
 }

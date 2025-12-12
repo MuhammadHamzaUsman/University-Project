@@ -12,7 +12,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.scene.Node;
 
 public class Puzzel {
-    private VoxelGridInterface targetGridFunction;
+    private Statement targetGridFunction;
     private VoxelGrid targetGrid;
     private VoxelGrid userGrid;
 
@@ -33,7 +33,7 @@ public class Puzzel {
     private Parser parser = new Parser(variables, null);
     private Interpreter interpreter;
 
-    public Puzzel(VoxelGrid targetGrid, VoxelGridInterface targetGridFunction, VoxelGrid userGrid, String name) {
+    public Puzzel(VoxelGrid targetGrid, Statement targetGridFunction, VoxelGrid userGrid, String name) {
 
         if(!userGrid.isSizeSame(targetGrid)){
             throw new IllegalArgumentException("Grids does not have same size");
@@ -76,10 +76,9 @@ public class Puzzel {
         interpreter = new Interpreter(variables);
     }
 
-    public void intializeTargetGrid(Node targetNode){
-        targetGrid.placeVoxels(targetGridFunction);
-        targetGrid.draw();
+    public void intializeTargetGrid(Node targetNode, SimpleApplication app){
         targetNode.attachChild(targetGrid.getGridNode());
+        updateGrid(targetGrid, targetGridFunction, app);
     }
 
     public void intializeUserGrid(Node userNode){
@@ -91,6 +90,12 @@ public class Puzzel {
         parser.setTokens(Lexer.lexer(this.code));
         Statement program = parser.parseProgram();
 
+        updateGrid(userGrid, program, app);
+
+        updateCompletion();
+    }
+
+    private void updateGrid(VoxelGrid grid, Statement program, SimpleApplication app){
         interpreter.resetVaraibles();
 
         interpreter.getVariables().declareVariable("x", Value.of(0.0));
@@ -100,7 +105,7 @@ public class Puzzel {
         Value yArg = interpreter.getVariables().getValue("y");
         Value zArg = interpreter.getVariables().getValue("z");
 
-        userGrid.updateGrid( 
+        grid.updateGrid( 
             (x, y, z, frame) -> {
                 
                 xArg.setDoubleValue((double)x);
@@ -112,8 +117,6 @@ public class Puzzel {
                 return getVoxelFromValue(x, y, z, value, app);
             }
         );
-
-        updateCompletion();
     }
 
     private Voxel getVoxelFromValue(int x, int y, int z, Value value, SimpleApplication app){
@@ -123,10 +126,12 @@ public class Puzzel {
             return null;
         }
 
+        Voxel.setAssetManager(app.getAssetManager());
+
         switch (info.shape) {
-            case CUBE: return new Cube(x, y, z, MaterialEnum.MATTE, info.color, info.size, app.getAssetManager());
-            case SPHERE: return new Sphere(x, y, z, MaterialEnum.MATTE, info.color, info.size, app.getAssetManager());
-            case CYLINDER: return new Cylinder(x, y, z, MaterialEnum.MATTE, info.color, info.size, app.getAssetManager());
+            case CUBE: return new Cube(x, y, z, MaterialEnum.MATTE, info.color, info.size);
+            case SPHERE: return new Sphere(x, y, z, MaterialEnum.MATTE, info.color, info.size);
+            case CYLINDER: return new Cylinder(x, y, z, MaterialEnum.MATTE, info.color, info.size);
         }
 
         return null;
@@ -147,11 +152,11 @@ public class Puzzel {
         userGrid.placeVoxels((x,y,z,frame) -> null);
     }
 
-    public VoxelGridInterface getTargetGridFunction() {
+    public Statement getTargetGridFunction() {
         return targetGridFunction;
     }
 
-    public void setTargetGridFunction(VoxelGridInterface targetGridFunction) {
+    public void setTargetGridFunction(Statement targetGridFunction) {
         this.targetGridFunction = targetGridFunction;
     }
 

@@ -1,5 +1,8 @@
 package com.example.shape;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.jme3.asset.AssetManager;
 import com.jme3.asset.AssetNotFoundException;
 import com.jme3.material.Material;
@@ -18,6 +21,7 @@ public abstract class Voxel {
     protected Size size;
     protected Shape shape;
     protected double dimension;
+    protected static AssetManager assetManager;
 
     public final static double UNIT_SIZE = 1.0;
 
@@ -31,6 +35,10 @@ public abstract class Voxel {
     private static Spatial cone = null;
 
     abstract public void draw(Node group); 
+
+    public static void setAssetManager(AssetManager assetManager) {
+        Voxel.assetManager = assetManager;
+    }
 
     public static class PropertyInfoHolder{
         public Colors color;
@@ -108,6 +116,7 @@ public abstract class Voxel {
 
     public static Spatial getCone(AssetManager assetManager) throws AssetNotFoundException {
         if(cone == null){
+            Logger.getLogger("com.jme3.asset").setLevel(Level.FINE);
             cone = assetManager.loadModel("Models/cone.gltf");
 
             cone.depthFirstTraversal(spatial -> {
@@ -119,6 +128,8 @@ public abstract class Voxel {
 
         return cone.clone();
     }
+
+    abstract public void startAnimation();
 
     public int getX() {
         return x;

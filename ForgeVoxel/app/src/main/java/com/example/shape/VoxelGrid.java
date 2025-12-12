@@ -4,9 +4,12 @@ import com.example.TextEditor.Interpreter.interpreter.RuntimeError;
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.AssetManager;
 import com.jme3.math.ColorRGBA;
+import com.jme3.renderer.RenderManager;
+import com.jme3.renderer.ViewPort;
 import com.jme3.scene.Node;
+import com.jme3.scene.control.AbstractControl;
 
-public class VoxelGrid {
+public class VoxelGrid extends AbstractControl{
     private SimpleApplication app;
     private Gizmo gizmo;
 
@@ -27,6 +30,8 @@ public class VoxelGrid {
     
     private Node border;
 
+    private boolean startedAnimation;
+
     public VoxelGrid(int width, int height, int depth, String name) {
         this.height = height;
         this.width = width;
@@ -43,6 +48,11 @@ public class VoxelGrid {
         xDrawLimit = width;
         yDrawLimit = height;
         zDrawLimit = depth;
+    }
+
+    public VoxelGrid(SimpleApplication app, int height, int width, int depth, String name) {
+        this(width, height, depth, name);
+        this.app = app;
     }
 
     public void setApp(SimpleApplication app){
@@ -236,5 +246,27 @@ public class VoxelGrid {
     public void addGizmo(Gizmo gizmo) {
         this.gizmo = gizmo;
         this.gridNode.attachChild(gizmo.getGizmoNode());
+    }
+
+    @Override
+    protected void controlRender(RenderManager arg0, ViewPort arg1) {}
+
+    @Override
+    protected void controlUpdate(float arg0) {
+        if(!startedAnimation){
+            startedAnimation = true;
+
+            startVoxelAnimation();
+        }
+    }
+
+    private void startVoxelAnimation() {
+        for (Voxel[][] plane : grid) {
+            for (Voxel[] array : plane) {
+                for (Voxel voxel : array) {
+                    if(voxel != null){voxel.startAnimation();}
+                }
+            }
+        }
     }
 }

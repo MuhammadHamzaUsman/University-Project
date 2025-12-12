@@ -1,7 +1,13 @@
 package com.example.TextEditor.Interpreter.statements;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class NumericLiteral extends ExpressionStatement {
+    @JsonProperty("value")
     private Double value;
+
+    public NumericLiteral() {
+    }
 
     public NumericLiteral(Double value) {
         this.value = value;

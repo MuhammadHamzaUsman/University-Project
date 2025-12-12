@@ -10,21 +10,28 @@ import org.fxmisc.richtext.LineNumberFactory;
 import org.lwjgl.glfw.GLFW;
 
 import com.example.App;
+import com.example.LevelSelectionUI;
+import com.example.MainMenu;
+import com.example.io.PuzzelLevel;
 import com.example.shape.Colors;
 import com.example.shape.Size;
 import com.jme3.system.lwjgl.LwjglWindow;
 
 import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -34,6 +41,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
@@ -60,6 +68,21 @@ public class CodeEditorUI{
     private App app;
     private Rectangle terminalBackground;
 
+    private Text matchPercentageDisplay;
+
+    private Button nextButton;
+    private ImageView[] nextGraphics;
+    private int disableOffset = 0;
+
+    private Font font;
+    private Image cubeImage;
+    private Image sphereImage;
+    private Image cylinderImage;
+
+    private ImageView shapeGeom; 
+    private Text[] textsGeom;
+    private Rectangle colorGeom;
+
     public CodeEditorUI (App app){
         this.app = app;
 
@@ -80,16 +103,20 @@ public class CodeEditorUI{
     }
 
     public void intializeUI(){
-        intializeTopBar();
-        intializeCodeEditor();
-        intializePropertyBar();
-        intializeErrorDisplay();
-
-        Font font = Font.loadFont(
+        font = Font.loadFont(
             getClass().getResourceAsStream("/BlockCraftMedium-PVLzd.otf"),
             14
         );
 
+        cubeImage = new Image(getClass().getResourceAsStream("/cube.png"));
+        sphereImage = new Image(getClass().getResourceAsStream("/sphere.png"));
+        cylinderImage = new Image(getClass().getResourceAsStream("/cylinder.png"));
+        
+        intializeTopBar();
+        intializeCodeEditor();
+        intializePropertyBar();
+        intializeErrorDisplay();
+        
         layout = new VBox(topBar, vsPane, propertiesGrid);
         layout.setMaxWidth(Double.MAX_VALUE);
         layout.setMaxHeight(Double.MAX_VALUE);
@@ -181,7 +208,7 @@ public class CodeEditorUI{
     }
 
     private void intializeTopBar(){
-        topBar = new HBox(10);
+        topBar = new HBox(5);
         topBar.setAlignment(Pos.CENTER);
         topBar.setMaxWidth(Double.MAX_VALUE);
         topBar.setPrefHeight(40);
@@ -204,15 +231,87 @@ public class CodeEditorUI{
             }
         );
 
+        ImageView exitButtonGraphic = new ImageView(new Image(getClass().getResourceAsStream("/exit.png")));
+        ImageView exitButtonPressedGraphic = new ImageView(new Image(getClass().getResourceAsStream("/exit_pressed.png")));
+        
+        Button exitButton = new Button();
+        exitButton.setBackground(Background.EMPTY);
+        exitButton.setMinSize(20, 20);
+        exitButton.setGraphic(exitButtonGraphic);
+        exitButton.setContentDisplay(ContentDisplay.CENTER);
+
+        exitButton.setOnMousePressed((event) -> exitButton.setGraphic(exitButtonPressedGraphic));
+        exitButton.setOnMouseReleased( 
+            (event) -> {
+                MainMenu.levelReader.updateUserCode(code, app.puzzelLevel);
+                exitButton.setGraphic(exitButtonGraphic);
+                app.stop();
+            } 
+        );
+
+        nextGraphics = new ImageView[]{
+            new ImageView(new Image(getClass().getResourceAsStream("/next.png"))),
+            new ImageView(new Image(getClass().getResourceAsStream("/next_pressed.png"))),
+            new ImageView(new Image(getClass().getResourceAsStream("/next_disable.png"))),
+            new ImageView(new Image(getClass().getResourceAsStream("/next_pressed_disable.png")))
+        };
+        
+        nextButton = new Button();
+        nextButton.setBackground(Background.EMPTY);
+        nextButton.setMinSize(20, 20);
+        nextButton.setContentDisplay(ContentDisplay.CENTER);
+        
+        matchPercentageDisplay = new Text("00.00%");
+        matchPercentageDisplay.setFill(Color.rgb(199, 199, 199));
+        matchPercentageDisplay.setFont(Font.font(LevelSelectionUI.font.getFamily(), 16));
+        
+        if(app.puzzelLevel.completed){
+            nextButton.setDisable(false);
+            nextButton.setGraphic(nextGraphics[0 + disableOffset]);
+        }
+        else{
+            disableOffset += 2;
+            nextButton.setDisable(true);
+            nextButton.setGraphic(nextGraphics[0 + disableOffset]);
+        }
+
+        nextButton.setOnMousePressed((event) -> nextButton.setGraphic(nextGraphics[1 + disableOffset]));
+        
+        nextButton.setOnMouseReleased( 
+            (event) -> {
+                nextButton.setGraphic(nextGraphics[0 + disableOffset]);
+
+                if(!nextButton.isDisabled()){
+                    int puzzelNumber = app.puzzelNumber + 1;
+                    MainMenu.levelReader.updateUserCode(code, app.puzzelLevel);
+                    
+                    if(puzzelNumber < MainMenu.levels.size()){
+                        PuzzelLevel puzzelLevel = MainMenu.levels.get(puzzelNumber);
+                        MainMenu.levelReader.loadFunc(puzzelLevel);
+                        app.enqueue(
+                            () -> {
+                                app.nextLevel(puzzelLevel, puzzelNumber);
+                            }
+                        );
+                    }
+                    else{
+                        app.stop();
+                    }
+                }
+            } 
+        );
+
         terminalBackground = new Rectangle(36, 36);
         terminalBackground.setFill(Color.rgb(60, 60, 60));
         terminalBackground.setArcHeight(10);
         terminalBackground.setArcWidth(10);
 
+        HBox geomBar = intializeGeomBar();
+
         StackPane pane = new StackPane(terminalBackground, terminal);
         pane.setPadding(new Insets(0, 10, 0, 0));
 
-        topBar.getChildren().addAll(spacer, pane);
+        topBar.getChildren().addAll(exitButton, nextButton, matchPercentageDisplay, geomBar, spacer, pane);
     }
 
     private void removeErrorDisplay() {
@@ -293,11 +392,11 @@ public class CodeEditorUI{
 
     private HBox getRowOfShapes(){
 
-        ImageView cubeImage = new ImageView(new Image(getClass().getResourceAsStream("/cube.png")));
-        ImageView sphereImage = new ImageView(new Image(getClass().getResourceAsStream("/sphere.png")));
-        ImageView cylinderImage = new ImageView(new Image(getClass().getResourceAsStream("/cylinder.png")));     
+        ImageView cubeImageView = new ImageView(cubeImage);
+        ImageView sphereImageView = new ImageView(sphereImage);
+        ImageView cylinderImageView = new ImageView(cylinderImage);     
 
-        for(ImageView imageView : List.of(cubeImage, sphereImage, cylinderImage)){
+        for(ImageView imageView : List.of(cubeImageView, sphereImageView, cylinderImageView)){
             imageView.setFitWidth(25);
             imageView.setFitHeight(25);
             imageView.setPreserveRatio(true);
@@ -307,7 +406,7 @@ public class CodeEditorUI{
         shapeRow.setAlignment(Pos.CENTER);
         shapeRow.setPadding(new Insets(0, 3, 0, 3));
 
-        shapeRow.getChildren().addAll(cubeImage, createVerticalSperator(1, 20), sphereImage, createVerticalSperator(1, 20), cylinderImage);
+        shapeRow.getChildren().addAll(cubeImageView, createVerticalSperator(1, 20), sphereImageView, createVerticalSperator(1, 20), cylinderImageView);
 
         return shapeRow;
     }
@@ -355,13 +454,151 @@ public class CodeEditorUI{
     }
 
     public void updateErrorDisplay(String error){
-        errorDisplay.setText(error);
+        if(errorDisplay != null) {errorDisplay.setText(error);}
     }
 
     public void close(){
         if(editorStage != null){
             editorStage.close();
         }
-        Platform.exit();
+    }
+
+    public void setPuzzelCompleted() {
+        nextButton.setDisable(false);
+        if(disableOffset == 2) {disableOffset -= 2;}
+        nextButton.setGraphic(nextGraphics[0 + disableOffset]);
+        matchPercentageDisplay.setFill(Color.rgb(20, 140, 84));
+    }
+    
+    public void reset() {
+        codeEditor.replaceText("");
+        updateErrorDisplay("");
+
+        if(app.puzzelLevel.completed){
+            nextButton.setDisable(false);
+            nextButton.setGraphic(nextGraphics[0 + disableOffset]);
+        }
+        else{
+            disableOffset += 2;
+            nextButton.setDisable(true);
+            nextButton.setGraphic(nextGraphics[0 + disableOffset]);
+        }
+    }
+
+    public void setCode(String userFunction) {
+        code = userFunction;
+        codeEditor.replaceText(code);
+    }
+
+    public void setMatchingPercentage(double matchPercentage) {
+        if(matchPercentageDisplay != null){
+            matchPercentageDisplay.setText(String.format("%.2f%", matchPercentage * 100));
+        }
+    }
+
+    private HBox intializeGeomBar(){
+        HBox geomBar = new HBox();
+        geomBar.setMaxSize(125, 20);
+        
+        textsGeom = new Text[]{
+            new Text(),
+            new Text(),
+            new Text(),
+            new Text(),
+            new Text()
+        };
+        
+        Color[] colors = new Color[]{
+            Color.rgb(63, 145, 119),
+            Color.rgb(248, 128, 112),
+            Color.rgb(38, 125, 195),
+            Color.rgb(65, 65, 65),
+            Color.rgb(65, 65, 65)
+        };
+        
+        Font font = Font.font(LevelSelectionUI.font.getFamily(), 16);
+        Rectangle background;
+        StackPane stack;
+        
+        for(int i = 0; i < 5; i++){
+            textsGeom[i].setFill(Color.WHITE);
+            textsGeom[i].setFont(font);
+            background = new Rectangle(0, 0, 20, 20);
+            background.setFill(colors[i]);
+            stack = new StackPane(background, textsGeom[i]);
+            stack.setMaxSize(20, 20);
+            geomBar.getChildren().add(stack);
+        }
+
+        stack = (StackPane)geomBar.getChildren().get(3);
+        colorGeom = (Rectangle)stack.getChildren().get(0);
+
+        Region region = new Region();
+        HBox.setHgrow(region, Priority.ALWAYS);
+        geomBar.getChildren().add(region);
+
+        shapeGeom = new ImageView();
+        shapeGeom.setFitWidth(20);
+        shapeGeom.setFitHeight(20);
+        shapeGeom.setSmooth(false);
+        geomBar.getChildren().add(shapeGeom);
+
+        BackgroundFill backgroundFill = new BackgroundFill(
+            Color.rgb(60, 60, 60),
+            new CornerRadii(3.0),
+            Insets.EMPTY
+        );
+
+        geomBar.setBackground(new Background(backgroundFill));
+
+        return geomBar;
+    }
+
+    public void updateGeomDisplay(String name) {
+        String[] info = name.split("-", 2)[1].split("\\|");
+
+        int color = Integer.parseInt(info[0]);
+        
+        switch (info[1]) {
+            case "Cube":
+                shapeGeom.setImage(cubeImage);
+                break;
+            case "Sphere":
+                shapeGeom.setImage(sphereImage);
+                break;
+            case "Cylinder":
+                shapeGeom.setImage(cylinderImage);
+                break;
+            default:
+                break;
+        }
+
+        char size = info[2].charAt(0);
+
+        int x = Integer.parseInt(info[3]);
+        int y = Integer.parseInt(info[4]);
+        int z = Integer.parseInt(info[5]);
+
+        textsGeom[0].setText(x + "");
+        textsGeom[1].setText(y + "");
+        textsGeom[2].setText(z + "");
+        textsGeom[3].setText(color + "");
+        colorGeom.setFill(Colors.getColor(color).getFxColor());
+        textsGeom[4].setText(size + "");
+    }
+
+    public void resetGeomDisplay() {
+        shapeGeom.setImage(null);
+
+        textsGeom[0].setText("");
+        textsGeom[1].setText("");
+        textsGeom[2].setText("");
+        textsGeom[3].setText("");
+        colorGeom.setFill(Color.rgb(65, 65, 65));
+        textsGeom[4].setText("");
+    }
+
+    public String getCode(){
+        return code;
     }
 }

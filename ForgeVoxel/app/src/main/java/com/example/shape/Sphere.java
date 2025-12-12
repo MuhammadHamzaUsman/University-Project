@@ -1,6 +1,5 @@
 package com.example.shape;
 
-import com.jme3.asset.AssetManager;
 import com.jme3.material.RenderState.FaceCullMode;
 import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
@@ -10,7 +9,7 @@ import com.jme3.scene.Node;
 public class Sphere extends Voxel{
     private Geometry sphere;
 
-    public Sphere(int x, int y, int z, MaterialEnum materialEnum, Colors color, Size size, AssetManager assetManager) {
+    public Sphere(int x, int y, int z, MaterialEnum materialEnum, Colors color, Size size) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -26,7 +25,7 @@ public class Sphere extends Voxel{
 
         com.jme3.scene.shape.Sphere sphereShape = new com.jme3.scene.shape.Sphere(50, 50, (float)(dimension));
         this.sphere = new Geometry(
-            String.format("Voxel-Sphere: %d, %d, %d", x, y, z),
+            String.format("Voxel-%d|Sphere|%c|%d|%d|%d", color.ordinal(), size.name().charAt(0), x, y, z),
             sphereShape
         );
         this.sphere.setMaterial(this.material);
@@ -41,6 +40,7 @@ public class Sphere extends Voxel{
         double groupY = y * Voxel.UNIT_SIZE;
 
         sphere.setLocalTranslation((float)groupX, (float)groupY, (float)groupZ);
+        sphere.addControl(new VoxelAnimation());
         node.attachChild(sphere);
     }
 
@@ -50,5 +50,11 @@ public class Sphere extends Voxel{
 
     public void setSphere(Geometry sphere) {
         this.sphere = sphere;
+    }
+
+    @Override
+    public void startAnimation() {
+        VoxelAnimation animation = sphere.getControl(VoxelAnimation.class);
+        if(animation != null){animation.setEnabled(true);}
     }
 }

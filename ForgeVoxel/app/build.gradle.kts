@@ -13,13 +13,29 @@ javafx {
     )
 }
 
+sourceSets {
+    main {
+        resources {
+            srcDirs("app/src/main/resources", "app/assets")
+        }
+    }
+}
+
 application {
-    mainClass.set("com.example.App") 
+    mainClass.set("com.example.MainMenu") 
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
+
+    sourceSets["main"].java {
+        srcDir("app/levelsOrgin")
+    }
+
+    sourceSets["main"].java {
+        srcDir("app/levels")
+    }
 }
 
 repositories {
@@ -37,6 +53,10 @@ dependencies {
     implementation("org.jmonkeyengine:jme3-plugins:$jmeVer")
 
     implementation("org.fxmisc.richtext:richtextfx:0.11.7")
+
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.17.0")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.0")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")

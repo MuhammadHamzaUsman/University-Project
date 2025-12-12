@@ -125,7 +125,7 @@ public class Parser {
         stream.expectType(Tokens.RIGHT_PARANTHESES, "Parse Error: Expecting a Opening Parantheses after if condition");
         
         stream.expectType(Tokens.LEFT_BRACES, "Parse Error: Expecting a Opening Brace at start of if body");
-        Statement[] ifBody = parseBlock().getStatementsArray();
+        Statement[] ifBody = parseBlock().toStatementsArray();
         stream.expectType(Tokens.RIGHT_BRACES, "Parse Error: Expecting a Opening Brace at end of if body");
         
         Statement[] elseBody = null;
@@ -137,7 +137,7 @@ public class Parser {
             }
             else{
                 stream.expectType(Tokens.LEFT_BRACES, "Parse Error: Expecting a Opening Brace at start of else body");
-                elseBody = parseBlock().getStatementsArray();
+                elseBody = parseBlock().toStatementsArray();
                 stream.expectType(Tokens.RIGHT_BRACES, "Parse Error: Expecting a Opening Brace at end of else body");
             }
             

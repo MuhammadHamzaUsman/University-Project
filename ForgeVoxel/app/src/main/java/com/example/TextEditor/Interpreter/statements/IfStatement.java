@@ -1,9 +1,20 @@
 package com.example.TextEditor.Interpreter.statements;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class IfStatement extends Statement{
+    
+    @JsonProperty("condition")
     private ExpressionStatement condition;
+    
+    @JsonProperty("ifBlock")
     private Statement[] ifBlock;
+    
+    @JsonProperty("elseBlock")
     private Statement[] elseBlock;
+
+    public IfStatement() {
+    }
 
     public IfStatement(ExpressionStatement condition, Statement[] ifBlock, Statement[] elseBlock) {
         this.condition = condition;

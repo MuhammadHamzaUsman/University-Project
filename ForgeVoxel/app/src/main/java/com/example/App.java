@@ -10,17 +10,12 @@ import org.lwjgl.glfw.GLFW;
 
 import com.example.TextEditor.Interpreter.CodeEditorUI;
 import com.example.TextEditor.Interpreter.interpreter.RuntimeError;
-import com.example.shape.Colors;
-import com.example.shape.Cube;
+import com.example.io.PuzzelLevel;
 import com.example.shape.Gizmo;
 import com.example.shape.GizmoState;
-import com.example.shape.MaterialEnum;
 import com.example.shape.OrbitCamera;
 import com.example.shape.Puzzel;
-import com.example.shape.Size;
 import com.example.shape.Voxel;
-import com.example.shape.VoxelGrid;
-import com.example.shape.VoxelGridInterface;
 
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.plugins.FileLocator;
@@ -36,46 +31,71 @@ import com.jme3.scene.Node;
 import com.jme3.scene.shape.Quad;
 import com.jme3.shadow.DirectionalLightShadowRenderer;
 import com.jme3.shadow.EdgeFilteringMode;
-import com.jme3.system.SystemListener;
 import com.jme3.system.lwjgl.LwjglWindow;
 
 import javafx.application.Platform;
 
-public class App extends SimpleApplication implements SystemListener{
+public class App extends SimpleApplication{
     public String getGreeting() {
         return "Hello World!";
     }
 
     @Override
+    public void stop() {
+        super.stop();
+        MainMenu.levelReader.updateUserCode(codeEditorUI.getCode(), puzzelLevel);
+
+        Platform.runLater(() -> { if(codeEditorUI != null){codeEditorUI.close();} });
+        MainMenu.jmeThread = null;
+    }
+
+    @Override
     public void destroy() {
         super.destroy();
+        MainMenu.levelReader.updateUserCode(codeEditorUI.getCode(), puzzelLevel);
         
         Platform.runLater(() -> { if(codeEditorUI != null){codeEditorUI.close();} });
+        MainMenu.jmeThread = null;
     }
 
-    public static void main(String[] args) {
-        javafx.application.Platform.startup(() -> {});
+    // public static void main(String[] args) {
+    //     javafx.application.Platform.startup(() -> {});
 
-        App app = new App();
-        app.start();
-        // javafx.application.Platform.exit();
-    }
+    //     App app = new App();
+    //     app.start();
+    // }
 
     // code Editor
+    private CodeEditorUI codeEditorUI;
+    private LevelSelectionUI levelSelectionUI;
+
+    private Camera topCam;
+    private Camera bottomCam;
     private Node topRootNode;
     private Node bottomRootNode;
-    private CodeEditorUI codeEditorUI;
     private OrbitCamera topOrbitCamera;
     private OrbitCamera bottomOrbitCamera;
     private Gizmo topGizmo;
     private Gizmo bottomGizmo;
 
     private Future<?> errorCheck = null;
+    public PuzzelLevel puzzelLevel;
     private Puzzel puzzel;
+    public int puzzelNumber;
+
+    public App(PuzzelLevel puzzelLevel, int puzzelNumber, LevelSelectionUI levelSelectionUI){
+        super();
+        this.puzzelLevel = puzzelLevel;
+        this.puzzelNumber = puzzelNumber;
+        this.levelSelectionUI = levelSelectionUI;
+    }
 
     @Override
     public void simpleInitApp() {
-        assetManager.registerLocator("app/assets/", FileLocator.class);
+        assetManager.registerLocator("assets/", FileLocator.class);
+        Voxel.setAssetManager(assetManager);
+
+        puzzel = puzzelLevel.toPuzzel(this);
 
         viewPort.setBackgroundColor(ColorRGBA.fromRGBA255(3 ,3, 3, 255));
         flyCam.setEnabled(false);
@@ -86,7 +106,7 @@ public class App extends SimpleApplication implements SystemListener{
         topRootNode = new Node("top");
         bottomRootNode = new Node("bottom");
 
-        Camera topCam = cam.clone();
+        topCam = cam.clone();
         topCam.setLocation(new Vector3f(0, 0, 5));
         topCam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
         topCam.setViewPort(0.5f, 1f, 0.5f, 1f);
@@ -96,7 +116,7 @@ public class App extends SimpleApplication implements SystemListener{
         topViewPort.setClearFlags(true, true, true);
         topViewPort.attachScene(topRootNode);
 
-        Camera bottomCam = cam.clone();
+        bottomCam = cam.clone();
         bottomCam.setLocation(new Vector3f(0, 0, 5));
         bottomCam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
         bottomCam.setViewPort(0.5f, 1f, 0f, 0.5f);
@@ -146,50 +166,37 @@ public class App extends SimpleApplication implements SystemListener{
 
         addBorder(0.5f, 1f, 0.5f, 1f , 8, 6, ColorRGBA.fromRGBA255(50, 50, 50, 255), ColorRGBA.fromRGBA255(144, 164, 174, 255));
         addBorder(0.5f, 1f, 0f, 0.5f , 8, 6, ColorRGBA.fromRGBA255(50, 50, 50, 255), ColorRGBA.fromRGBA255(144, 164, 174, 255));
-
-        VoxelGridInterface bottomFunc = new VoxelGridInterface() {
-            @Override
-            public Voxel determineVoxel(int x, int y, int z, int frame) {
-                if(y == 0 || y == 4){ 
-                    return new Cube(x, y, z, MaterialEnum.MATTE, Colors.values()[((x + 2) + (y + 2) + (z + 2)) % 5], Size.LARGE, assetManager); 
-                }
-                return null;
-            }
-        };
-
-        VoxelGrid targetGrid = new VoxelGrid(5, 5, 5, "puzzel-1-target");
-        targetGrid.intializeBorder(assetManager);
-        targetGrid.setApp(this);
-        VoxelGrid userGrid = new VoxelGrid(5, 5, 5, "puzzel-1-user");
-        userGrid.intializeBorder(assetManager);
-        userGrid.setApp(this);
-
-        puzzel = new Puzzel(
-            targetGrid, 
-            bottomFunc,
-            userGrid, 
-            "puzzel-1"
-        );
         
         GizmoState sharedGizmoState = new GizmoState(puzzel.getWidth() / 2 + 1, puzzel.getHeight() / 2 + 1, puzzel.getDepth() / 2 + 1);
         
-        topOrbitCamera = new OrbitCamera(topRootNode, topCam, inputManager, assetManager);
-        topGizmo = new Gizmo(userGrid, inputManager, topCam, sharedGizmoState);
+        topOrbitCamera = new OrbitCamera(topRootNode, topCam, this, inputManager, assetManager);
+        topGizmo = new Gizmo(puzzel.getUserGrid(), inputManager, topCam, sharedGizmoState);
         topGizmo.intializeAxisBars(assetManager);
-        userGrid.addGizmo(topGizmo);
+        puzzel.getUserGrid().addGizmo(topGizmo);
         
-        bottomOrbitCamera = new OrbitCamera(bottomRootNode, bottomCam, inputManager, assetManager);
-        bottomGizmo = new Gizmo(targetGrid, inputManager, bottomCam, sharedGizmoState);
+        bottomOrbitCamera = new OrbitCamera(bottomRootNode, bottomCam, this, inputManager, assetManager);
+        bottomGizmo = new Gizmo(puzzel.getTargetGrid(), inputManager, bottomCam, sharedGizmoState);
         bottomGizmo.intializeAxisBars(assetManager);
-        targetGrid.addGizmo(bottomGizmo);
+        puzzel.getTargetGrid().addGizmo(bottomGizmo);
         
         this.enqueue(() -> {
-            puzzel.intializeTargetGrid(bottomRootNode);
+            puzzel.intializeTargetGrid(bottomRootNode, this);
             puzzel.intializeUserGrid(topRootNode);
+
+            if(!puzzelLevel.userFunction.isBlank()){
+                runCode(puzzelLevel.userFunction);
+            }
         });
 
         codeEditorUI = new CodeEditorUI(this);
-        Platform.runLater(() -> { codeEditorUI.intializeUI(); });
+        Platform.runLater(
+            () -> { 
+                codeEditorUI.intializeUI();
+                if(!puzzelLevel.userFunction.isBlank()){
+                    codeEditorUI.setCode(puzzelLevel.userFunction);
+                } 
+            }
+        );
 
         long windowHandle = ((LwjglWindow)getContext()).getWindowHandle();
         GLFW.glfwSetWindowPosCallback(windowHandle, 
@@ -294,11 +301,71 @@ public class App extends SimpleApplication implements SystemListener{
                     puzzel.updateUserGrid(newCode, this);
 
                     codeEditorUI.updateErrorDisplay("");
+                    codeEditorUI.setMatchingPercentage(puzzel.getMatchPercentage());
+                    
+                    if(puzzel.isComplete()){
+                        Platform.runLater(
+                            () -> {
+                                codeEditorUI.setPuzzelCompleted();
+                                levelSelectionUI.setLevelComplted(puzzelNumber);
+                            }
+                        );
+                        MainMenu.levelReader.updateCompletion(true, puzzelLevel);
+                        puzzelLevel.completed = true;
+                    }
                 } 
                 catch (RuntimeError r) { codeEditorUI.updateErrorDisplay(r.getMessage()); } 
-                catch (Exception e) { codeEditorUI.updateErrorDisplay("Syntax Error: " + e.getMessage()); }
+                catch (Exception e) { codeEditorUI.updateErrorDisplay("Syntax Error: " + e.getMessage());}
                 return null;
             }
         );
+    }
+
+    public void nextLevel(PuzzelLevel level, int number) {
+        this.puzzelLevel = level;
+        this.puzzelNumber = number;
+
+        Node topOrbitNode = topOrbitCamera.getOrbitCameraNode();
+        Node botttomOrbitNode = bottomOrbitCamera.getOrbitCameraNode();
+
+        topRootNode.detachAllChildren();
+        bottomRootNode.detachAllChildren();
+
+        topRootNode.attachChild(topOrbitNode);
+        bottomRootNode.attachChild(botttomOrbitNode);
+
+        puzzel = puzzelLevel.toPuzzel(this);
+
+        GizmoState sharedState = new GizmoState(
+            puzzel.getWidth() / 2 + 1,
+            puzzel.getHeight() / 2 + 1,
+            puzzel.getDepth() / 2 + 1
+        );
+
+        topGizmo = new Gizmo(puzzel.getUserGrid(), inputManager, topCam, sharedState);
+        topGizmo.intializeAxisBars(assetManager);
+        puzzel.getUserGrid().addGizmo(topGizmo);
+
+        bottomGizmo = new Gizmo(puzzel.getTargetGrid(), inputManager, bottomCam, sharedState);
+        bottomGizmo.intializeAxisBars(assetManager);
+        puzzel.getTargetGrid().addGizmo(bottomGizmo);
+
+        this.enqueue(
+            () -> {
+                puzzel.intializeTargetGrid(bottomRootNode, this);
+                puzzel.intializeUserGrid(topRootNode);
+                return null;
+            }
+        );
+
+        Platform.runLater(() -> codeEditorUI.reset());
+    }
+
+	public void codeEditorUiGeomDisplay(String name) {
+        codeEditorUI.updateGeomDisplay(name);
+	}
+
+    public void codeEditorUiGeomDisplayReset(){
+        codeEditorUI.resetGeomDisplay();
     }
 }

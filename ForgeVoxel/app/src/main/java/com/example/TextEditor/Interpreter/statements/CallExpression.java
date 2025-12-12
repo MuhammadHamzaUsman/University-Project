@@ -2,9 +2,18 @@ package com.example.TextEditor.Interpreter.statements;
 
 import java.util.Arrays;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class CallExpression extends ExpressionStatement{
+    
+    @JsonProperty("args")
     private ExpressionStatement[] args;
+    
+    @JsonProperty("calle")
     private ExpressionStatement calle;
+
+    public CallExpression() {
+    }
 
     public CallExpression(ExpressionStatement calle, ExpressionStatement[] args) {
         this.args = args;

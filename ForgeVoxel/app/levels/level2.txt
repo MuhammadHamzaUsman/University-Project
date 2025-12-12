@@ -1,0 +1,6 @@
+false
+return {
+    Shape : 0,
+    Size : 2,
+    Color : ((x ^ 2) + (y ^ 2) + (z ^ 2)) % 16
+}

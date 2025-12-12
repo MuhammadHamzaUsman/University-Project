@@ -2,8 +2,14 @@ package com.example.TextEditor.Interpreter.statements;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class MapLiteral extends ExpressionStatement {
+    @JsonProperty("map")
     private Map<Identifer, ExpressionStatement> map;
+
+    public MapLiteral() {
+    }
 
     public MapLiteral(Map<Identifer, ExpressionStatement> map) {
         this.map = map;
