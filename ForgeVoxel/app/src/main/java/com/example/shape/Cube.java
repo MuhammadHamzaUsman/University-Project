@@ -6,6 +6,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
+import com.jme3.scene.Geometry;
 
 public class Cube extends Voxel{
     private Spatial cube;
@@ -60,6 +61,12 @@ public class Cube extends Voxel{
 
         Spatial clone = cubeModel.clone();
         clone.setName(name);
+        clone.depthFirstTraversal(spatial -> {
+                if (spatial instanceof Geometry) {
+                    spatial.setName(name);
+                }
+            }
+        );
 
         return clone;
     }

@@ -212,17 +212,17 @@ public class OrbitCamera {
                 highlightedVoxel = null;
                 app.codeEditorUiGeomDisplayReset();
             }
-
+            
             return;
         }
-
+        
         
         if(geom != highlightedVoxel){
             highlightedVoxel = geom;
             
             if(highlight.getParent() == null)rootNode.attachChild(highlight);
             
-            highlight.setLocalTranslation(highlightedVoxel.getLocalTranslation());
+            highlight.setLocalTranslation(highlightedVoxel.getWorldTranslation());
             app.codeEditorUiGeomDisplay(geom.getName());
         }
     }

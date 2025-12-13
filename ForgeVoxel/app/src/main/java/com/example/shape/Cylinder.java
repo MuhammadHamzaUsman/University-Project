@@ -6,6 +6,7 @@ import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
+import com.jme3.scene.Geometry;
 
 public class Cylinder extends Voxel{
     
@@ -30,7 +31,6 @@ public class Cylinder extends Voxel{
         this.cylinder = getModel(String.format("Voxel-%d|Cylinder|%c|%d|%d|%d", color.ordinal(), size.name().charAt(0), x, y, z));
         this.cylinder.setMaterial(this.material);
         this.cylinder.setShadowMode(ShadowMode.CastAndReceive);
-        this.cylinder.rotate(FastMath.PI / 2, 0f, 0f);
         this.cylinder.setQueueBucket(RenderQueue.Bucket.Opaque);
 
         this.cylinder.setLocalScale(0);
@@ -57,11 +57,17 @@ public class Cylinder extends Voxel{
 
     private Spatial getModel(String name){
         if(cylinderModel == null){
-            cylinderModel = assetManager.loadModel("Models/cube.gltf");
+            cylinderModel = assetManager.loadModel("Models/cylinder.gltf");
         }
 
         Spatial clone = cylinderModel.clone();
         clone.setName(name);
+        clone.depthFirstTraversal(spatial -> {
+                if (spatial instanceof Geometry) {
+                    spatial.setName(name);
+                }
+            }
+        );
 
         return clone;
     }
