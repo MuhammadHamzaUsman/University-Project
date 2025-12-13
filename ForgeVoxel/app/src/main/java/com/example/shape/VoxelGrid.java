@@ -4,12 +4,10 @@ import com.example.TextEditor.Interpreter.interpreter.RuntimeError;
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.AssetManager;
 import com.jme3.math.ColorRGBA;
-import com.jme3.renderer.RenderManager;
-import com.jme3.renderer.ViewPort;
+import com.jme3.math.FastMath;
 import com.jme3.scene.Node;
-import com.jme3.scene.control.AbstractControl;
 
-public class VoxelGrid extends AbstractControl{
+public class VoxelGrid{
     private SimpleApplication app;
     private Gizmo gizmo;
 
@@ -30,7 +28,7 @@ public class VoxelGrid extends AbstractControl{
     
     private Node border;
 
-    private boolean startedAnimation;
+    private float radius;
 
     public VoxelGrid(int width, int height, int depth, String name) {
         this.height = height;
@@ -44,6 +42,8 @@ public class VoxelGrid extends AbstractControl{
         xLimit = width / 2;
         yLimit = height / 2;
         zLimit = depth / 2;
+
+        radius = FastMath.sqrt(xLimit * xLimit + yLimit * yLimit + zLimit * zLimit);
 
         xDrawLimit = width;
         yDrawLimit = height;
@@ -76,7 +76,7 @@ public class VoxelGrid extends AbstractControl{
             for (int y = 0; y < yDrawLimit; y++) {
                 for (int x = 0; x < xDrawLimit; x++) {
                     voxel = grid[z][y][x];
-                    if(voxel != null){voxel.draw(gridNode);}
+                    if(voxel != null){voxel.draw(gridNode, radius);}
                 }
             }
         }
@@ -246,27 +246,5 @@ public class VoxelGrid extends AbstractControl{
     public void addGizmo(Gizmo gizmo) {
         this.gizmo = gizmo;
         this.gridNode.attachChild(gizmo.getGizmoNode());
-    }
-
-    @Override
-    protected void controlRender(RenderManager arg0, ViewPort arg1) {}
-
-    @Override
-    protected void controlUpdate(float arg0) {
-        if(!startedAnimation){
-            startedAnimation = true;
-
-            startVoxelAnimation();
-        }
-    }
-
-    private void startVoxelAnimation() {
-        for (Voxel[][] plane : grid) {
-            for (Voxel[] array : plane) {
-                for (Voxel voxel : array) {
-                    if(voxel != null){voxel.startAnimation();}
-                }
-            }
-        }
     }
 }

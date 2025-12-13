@@ -1,6 +1,7 @@
 package com.example.shape;
 
 import com.jme3.material.RenderState.FaceCullMode;
+import com.jme3.math.FastMath;
 import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Geometry;
@@ -18,6 +19,7 @@ public class Sphere extends Voxel{
         this.shape = Shape.SPHERE;
         this.size = size;
         this.dimension = shape.getDimension() * size.getFactor() * Voxel.UNIT_SIZE;
+        this.distFromZero = FastMath.sqrt(x * x + y * y + z * z);
 
         this.material.getAdditionalRenderState().setDepthTest(true);
         this.material.getAdditionalRenderState().setDepthWrite(true);
@@ -31,16 +33,18 @@ public class Sphere extends Voxel{
         this.sphere.setMaterial(this.material);
         this.sphere.setShadowMode(ShadowMode.CastAndReceive);
         this.sphere.setQueueBucket(RenderQueue.Bucket.Opaque);
+
+        this.sphere.setLocalScale(0);
     }
 
     @Override
-    public void draw(Node node) {
+    public void draw(Node node, float gridRadius) {
         double groupX = x * Voxel.UNIT_SIZE;
         double groupZ = z * Voxel.UNIT_SIZE; 
         double groupY = y * Voxel.UNIT_SIZE;
 
         sphere.setLocalTranslation((float)groupX, (float)groupY, (float)groupZ);
-        sphere.addControl(new VoxelAnimation());
+        sphere.addControl(new VoxelAnimation((distFromZero / gridRadius) * VoxelAnimation.delayDuaration, (float)(dimension * 2)));
         node.attachChild(sphere);
     }
 
@@ -50,11 +54,5 @@ public class Sphere extends Voxel{
 
     public void setSphere(Geometry sphere) {
         this.sphere = sphere;
-    }
-
-    @Override
-    public void startAnimation() {
-        VoxelAnimation animation = sphere.getControl(VoxelAnimation.class);
-        if(animation != null){animation.setEnabled(true);}
     }
 }

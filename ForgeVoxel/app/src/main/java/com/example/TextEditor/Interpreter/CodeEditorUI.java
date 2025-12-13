@@ -243,7 +243,8 @@ public class CodeEditorUI{
         exitButton.setOnMousePressed((event) -> exitButton.setGraphic(exitButtonPressedGraphic));
         exitButton.setOnMouseReleased( 
             (event) -> {
-                MainMenu.levelReader.updateUserCode(code, app.puzzelLevel);
+                MainMenu.levelIO.updateUserCode(code, app.puzzelLevel);
+                MainMenu.levelIO.writeLastPlayedLevel(app.puzzelLevel.levelName, app.puzzelNumber);
                 exitButton.setGraphic(exitButtonGraphic);
                 app.stop();
             } 
@@ -283,11 +284,11 @@ public class CodeEditorUI{
 
                 if(!nextButton.isDisabled()){
                     int puzzelNumber = app.puzzelNumber + 1;
-                    MainMenu.levelReader.updateUserCode(code, app.puzzelLevel);
+                    MainMenu.levelIO.updateUserCode(code, app.puzzelLevel);
                     
                     if(puzzelNumber < MainMenu.levels.size()){
                         PuzzelLevel puzzelLevel = MainMenu.levels.get(puzzelNumber);
-                        MainMenu.levelReader.loadFunc(puzzelLevel);
+                        MainMenu.levelIO.loadFunc(puzzelLevel);
                         app.enqueue(
                             () -> {
                                 app.nextLevel(puzzelLevel, puzzelNumber);
@@ -295,6 +296,7 @@ public class CodeEditorUI{
                         );
                     }
                     else{
+                        MainMenu.levelIO.writeLastPlayedLevel(app.puzzelLevel.levelName, app.puzzelNumber);
                         app.stop();
                     }
                 }
@@ -492,7 +494,7 @@ public class CodeEditorUI{
 
     public void setMatchingPercentage(double matchPercentage) {
         if(matchPercentageDisplay != null){
-            matchPercentageDisplay.setText(String.format("%.2f%", matchPercentage * 100));
+            matchPercentageDisplay.setText(String.format("%.2f%%", matchPercentage * 100));
         }
     }
 

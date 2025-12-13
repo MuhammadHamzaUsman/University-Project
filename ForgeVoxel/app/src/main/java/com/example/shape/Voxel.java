@@ -21,6 +21,7 @@ public abstract class Voxel {
     protected Size size;
     protected Shape shape;
     protected double dimension;
+    protected float distFromZero;
     protected static AssetManager assetManager;
 
     public final static double UNIT_SIZE = 1.0;
@@ -34,7 +35,7 @@ public abstract class Voxel {
 
     private static Spatial cone = null;
 
-    abstract public void draw(Node group); 
+    abstract public void draw(Node group, float animationGridRadius); 
 
     public static void setAssetManager(AssetManager assetManager) {
         Voxel.assetManager = assetManager;
@@ -128,8 +129,6 @@ public abstract class Voxel {
 
         return cone.clone();
     }
-
-    abstract public void startAnimation();
 
     public int getX() {
         return x;

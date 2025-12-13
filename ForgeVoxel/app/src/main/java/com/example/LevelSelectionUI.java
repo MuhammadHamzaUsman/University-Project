@@ -37,15 +37,14 @@ public class LevelSelectionUI {
     public LevelSelectionUI(int width, int height){
         this.width = width;
         this.height = height;
-    }
-
-    public VBox intializeUI(StackPane stackPane){
 
         font = Font.loadFont(
             getClass().getResourceAsStream("/BoldPixels.ttf"),
             30
         );
+    }
 
+    public VBox intializeUI(StackPane stackPane){
         ImageView exitButtonGraphic = new ImageView(new Image(getClass().getResourceAsStream("/exit.png")));
         ImageView exitButtonPressedGraphic = new ImageView(new Image(getClass().getResourceAsStream("/exit_pressed.png")));
         
@@ -187,19 +186,19 @@ public class LevelSelectionUI {
 
         stackPane.setOnMousePressed(
             event -> {
-                stackPane.getChildren().removeFirst();
-                stackPane.getChildren().addFirst(images[1]);
+                ImageView imageView = (ImageView)stackPane.getChildren().getFirst();
+                imageView.setImage(backgroundPressed);
             }
         );
         
         stackPane.setOnMouseReleased(
             event -> {
-                stackPane.getChildren().removeFirst();
-                stackPane.getChildren().addFirst(images[0]);
+                ImageView imageView = (ImageView)stackPane.getChildren().getFirst();
+                imageView.setImage(background);
                 if(MainMenu.jmeThread == null){
                     MainMenu.jmeThread = new Thread(
                         () -> {
-                            MainMenu.levelReader.loadFunc(puzzelLevel);
+                            MainMenu.levelIO.loadFunc(puzzelLevel);
                             App app = new App(puzzelLevel, puzzelNumber, this);
                             app.start();
                         }
@@ -242,9 +241,11 @@ public class LevelSelectionUI {
     }    
 
     public void setLevelComplted(int index){
-        ImageView compltedImage = intializeImage(completdGraphic);
-        StackPane.setAlignment(compltedImage, Pos.TOP_RIGHT);
         StackPane level = (StackPane)levelsList.getChildren().get(index);
-        level.getChildren().add(compltedImage);
+        if(level.getChildren().size() <= 2){
+            ImageView compltedImage = intializeImage(completdGraphic);
+            StackPane.setAlignment(compltedImage, Pos.TOP_RIGHT);
+            level.getChildren().add(compltedImage);
+        }
     }
 }

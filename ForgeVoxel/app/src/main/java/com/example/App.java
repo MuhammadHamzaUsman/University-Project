@@ -43,7 +43,8 @@ public class App extends SimpleApplication{
     @Override
     public void stop() {
         super.stop();
-        MainMenu.levelReader.updateUserCode(codeEditorUI.getCode(), puzzelLevel);
+        MainMenu.levelIO.updateUserCode(codeEditorUI.getCode(), puzzelLevel);
+        MainMenu.levelIO.writeLastPlayedLevel(puzzelLevel.levelName, puzzelNumber);
 
         Platform.runLater(() -> { if(codeEditorUI != null){codeEditorUI.close();} });
         MainMenu.jmeThread = null;
@@ -52,7 +53,8 @@ public class App extends SimpleApplication{
     @Override
     public void destroy() {
         super.destroy();
-        MainMenu.levelReader.updateUserCode(codeEditorUI.getCode(), puzzelLevel);
+        MainMenu.levelIO.updateUserCode(codeEditorUI.getCode(), puzzelLevel);
+        MainMenu.levelIO.writeLastPlayedLevel(puzzelLevel.levelName, puzzelNumber);
         
         Platform.runLater(() -> { if(codeEditorUI != null){codeEditorUI.close();} });
         MainMenu.jmeThread = null;
@@ -300,9 +302,12 @@ public class App extends SimpleApplication{
                 try {
                     puzzel.updateUserGrid(newCode, this);
 
-                    codeEditorUI.updateErrorDisplay("");
-                    codeEditorUI.setMatchingPercentage(puzzel.getMatchPercentage());
-                    
+                    Platform.runLater(
+                        () -> {
+                            codeEditorUI.updateErrorDisplay("");
+                           codeEditorUI.setMatchingPercentage(puzzel.getMatchPercentage());
+                        }
+                    );
                     if(puzzel.isComplete()){
                         Platform.runLater(
                             () -> {
@@ -310,7 +315,7 @@ public class App extends SimpleApplication{
                                 levelSelectionUI.setLevelComplted(puzzelNumber);
                             }
                         );
-                        MainMenu.levelReader.updateCompletion(true, puzzelLevel);
+                        MainMenu.levelIO.updateCompletion(true, puzzelLevel);
                         puzzelLevel.completed = true;
                     }
                 } 

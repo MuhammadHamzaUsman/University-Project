@@ -2,17 +2,48 @@ package com.example.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
+import com.example.MainMenu;
 import com.example.TextEditor.Interpreter.statements.Statement;
 
 import javafx.scene.image.Image;
 
-public class LevelReader {
+public class LevelIO {
+    private static final String LAST_PLAYED_LEVEL = System.getProperty("user.dir") + "/levels/lastPlayedLevel.dat";
+    private static final String LEVELS_FOLDER = System.getProperty("user.dir") + "/levels";
+    private String lastPlayedLevelName;
+    private int lastPlayedLevelIndex = -1;
+
+    public List<PuzzelLevel> readPuzzels(boolean readMetaData){
+        File levelsFolder = new File(LEVELS_FOLDER);
+        File levelsArray[] = levelsFolder.listFiles((File file, String name) -> name.endsWith(".dat"));
+        ArrayList<PuzzelLevel> levels = new ArrayList<>(levelsArray.length);
+
+        lastPlayedLevelName = readLastPlayedLevelName();
+
+        File level;
+        for (int i = 1; i < levelsArray.length; i++) {
+            level = levelsArray[i];
+
+            if(lastPlayedLevelName != null && level.getPath().endsWith("\\" + lastPlayedLevelName + ".dat")){
+                lastPlayedLevelIndex = i;
+            }
+
+            levels.add(readLevel(level.getPath(), readMetaData));
+        }
+        
+        return levels;
+    }
 
     public PuzzelLevel readLevel(String levelPath, boolean metadDataOnly){
         try {
@@ -125,5 +156,60 @@ public class LevelReader {
         catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void writeLastPlayedLevel(String name, int index){
+        lastPlayedLevelIndex = index;
+        try {
+            DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(new File(LAST_PLAYED_LEVEL)));
+            outputStream.writeUTF(name);
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public PuzzelLevel readLastPlayedLevel(boolean metadDataOnly){
+        PuzzelLevel puzzelLevel = null;
+
+        if(lastPlayedLevelIndex != -1){
+            puzzelLevel = MainMenu.levels.get(lastPlayedLevelIndex);
+
+            if(metadDataOnly) return puzzelLevel;
+            if(puzzelLevel.targetFunction != null) return puzzelLevel;
+            else{
+                loadFunc(puzzelLevel);
+                return puzzelLevel;
+            }
+        }
+        else{
+            if(lastPlayedLevelName != null){
+                return readLevel(LEVELS_FOLDER + "/" + lastPlayedLevelName + ".dat", metadDataOnly);
+            }
+            else{
+                return null;
+            }
+        }
+    }
+
+    private String readLastPlayedLevelName(){
+        try {
+            DataInputStream inputStream = new DataInputStream(new FileInputStream(new File(LAST_PLAYED_LEVEL)));
+            String lastPlayedLevelName = inputStream.readUTF();
+            inputStream.close();
+
+            return lastPlayedLevelName;
+        } 
+        catch (IOException e) {
+            return null;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public int getLastPlayedLevelIndex() {
+        return lastPlayedLevelIndex;
     }
 }

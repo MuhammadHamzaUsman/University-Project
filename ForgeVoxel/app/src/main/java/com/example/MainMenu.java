@@ -1,12 +1,9 @@
 package com.example;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.example.io.LevelReader;
+import com.example.io.LevelIO;
 import com.example.io.PuzzelLevel;
-
-import java.io.File;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -39,10 +36,11 @@ public class MainMenu extends Application{
     public static List<PuzzelLevel> levels;
     public static Font font;
 
-    public static LevelReader levelReader = new LevelReader();
+    public static LevelIO levelIO = new LevelIO();
 
     public static Thread jmeThread = null;
     private static boolean isLevelSelectionUIOpen = false;
+    private static VBox levelSelectionVBox;
 
     public void intializeMainMenu(){
         
@@ -51,7 +49,7 @@ public class MainMenu extends Application{
             14
         );
         
-        levels = loadPuzzels();
+        levels = levelIO.readPuzzels(true);
 
         Image backgroundImageInput = new Image(getClass().getResourceAsStream("/background.jpg"));
         BackgroundImage backgroundImage = new BackgroundImage(
@@ -134,14 +132,43 @@ public class MainMenu extends Application{
         Stage stage = new Stage();
         
         LevelSelectionUI levelUi = new LevelSelectionUI(360, 560);
+        
         StackPane stackPane = new StackPane(borderPane);
+        
+        levelSelectionVBox = levelUi.intializeUI(stackPane);
+
         Scene scene = new Scene(stackPane, 640, 480);
         
         stage.setScene(scene);
         stage.setMaximized(true);
 
         startButton.setOnMousePressed(event -> startButton.setGraphic(imageViewsPressed[0]));
-        startButton.setOnMouseReleased(event -> startButton.setGraphic(imageViews[0]));
+        startButton.setOnMouseReleased(
+            (event) -> {
+                startButton.setGraphic(imageViews[0]);
+                PuzzelLevel puzzelLevel = levelIO.readLastPlayedLevel(true);
+
+                if(puzzelLevel != null){
+                    levelIO.loadFunc(puzzelLevel);
+                    if(MainMenu.jmeThread == null){
+                        MainMenu.jmeThread = new Thread(
+                            () -> {
+                                MainMenu.levelIO.loadFunc(puzzelLevel);
+                                App app = new App(puzzelLevel, levelIO.getLastPlayedLevelIndex(), levelUi);
+                                app.start();
+                            }
+                        );
+
+                        MainMenu.jmeThread.setDaemon(true);
+                        MainMenu.jmeThread.start();
+                    }
+                }else{
+                    if(!isLevelSelectionUIOpen){
+                        stackPane.getChildren().add(levelSelectionVBox);
+                    }
+                }
+            }
+        );
 
         continueButton.setOnMousePressed(event -> continueButton.setGraphic(imageViewsPressed[1]));
         continueButton.setOnMouseReleased(
@@ -149,7 +176,7 @@ public class MainMenu extends Application{
                 continueButton.setGraphic(imageViews[1]);
                 
                 if(!isLevelSelectionUIOpen){
-                    stackPane.getChildren().add(levelUi.intializeUI(stackPane));
+                    stackPane.getChildren().add(levelSelectionVBox);
                 }
             }
         );
@@ -163,18 +190,6 @@ public class MainMenu extends Application{
         );
 
         stage.show();
-    }
-
-    public List<PuzzelLevel> loadPuzzels(){
-        File levelsFolder = new File(System.getProperty("user.dir") + "/levels");
-        File levelsArray[] = levelsFolder.listFiles((File file, String name) -> name.endsWith(".dat"));
-        ArrayList<PuzzelLevel> levels = new ArrayList<>(levelsArray.length);
-
-        for (File level : levelsArray) {
-            levels.add(levelReader.readLevel(level.getPath(), true));
-        }
-        
-        return levels;
     }
 
     @Override
