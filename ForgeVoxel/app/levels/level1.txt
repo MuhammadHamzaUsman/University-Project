@@ -1,5 +1,6 @@
 true 
 return {
-Shape: CYLINDER,
-Size : LARGE,
-Color : (abs(x) + abs(y) + abs(z)) % 16}
+    Shape : SPHERE, 
+    Size : LARGE,
+    Color : (abs(x) + abs(y) + abs(z)) % 16
+}

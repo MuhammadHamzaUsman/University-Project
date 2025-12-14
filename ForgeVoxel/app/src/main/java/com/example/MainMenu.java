@@ -39,8 +39,13 @@ public class MainMenu extends Application{
     public static LevelIO levelIO = new LevelIO();
 
     public static Thread jmeThread = null;
-    private static boolean isLevelSelectionUIOpen = false;
-    private static VBox levelSelectionVBox;
+    public static App app = null;
+    
+    private boolean isLevelSelectionUIOpen = false;
+    private VBox levelSelectionVBox;
+    private Stage stage;
+    private StackPane screenStackPane;
+
 
     public void intializeMainMenu(){
         
@@ -129,15 +134,15 @@ public class MainMenu extends Application{
         topPane.setPadding(new Insets(100, 0, 0, 0));
         borderPane.setTop(topPane);
         
-        Stage stage = new Stage();
+        stage = new Stage();
         
         LevelSelectionUI levelUi = new LevelSelectionUI(360, 560);
         
-        StackPane stackPane = new StackPane(borderPane);
+        StackPane screenStackPane = new StackPane(borderPane);
         
-        levelSelectionVBox = levelUi.intializeUI(stackPane);
+        levelSelectionVBox = levelUi.intializeUI(screenStackPane);
 
-        Scene scene = new Scene(stackPane, 640, 480);
+        Scene scene = new Scene(screenStackPane, 640, 480);
         
         stage.setScene(scene);
         stage.setMaximized(true);
@@ -154,7 +159,7 @@ public class MainMenu extends Application{
                         MainMenu.jmeThread = new Thread(
                             () -> {
                                 MainMenu.levelIO.loadFunc(puzzelLevel);
-                                App app = new App(puzzelLevel, levelIO.getLastPlayedLevelIndex(), levelUi);
+                                app = new App(puzzelLevel, levelIO.getLastPlayedLevelIndex(), levelUi);
                                 app.start();
                             }
                         );
@@ -164,7 +169,7 @@ public class MainMenu extends Application{
                     }
                 }else{
                     if(!isLevelSelectionUIOpen){
-                        stackPane.getChildren().add(levelSelectionVBox);
+                        screenStackPane.getChildren().add(levelSelectionVBox);
                     }
                 }
             }
@@ -176,7 +181,7 @@ public class MainMenu extends Application{
                 continueButton.setGraphic(imageViews[1]);
                 
                 if(!isLevelSelectionUIOpen){
-                    stackPane.getChildren().add(levelSelectionVBox);
+                    screenStackPane.getChildren().add(levelSelectionVBox);
                 }
             }
         );
@@ -185,7 +190,7 @@ public class MainMenu extends Application{
         exitButton.setOnMouseReleased(
             (event) -> {
                 exitButton.setGraphic(imageViews[2]);
-                stage.close();
+                close();
             }
         );
 
@@ -195,5 +200,17 @@ public class MainMenu extends Application{
     @Override
     public void start(Stage primaryStage) throws Exception {
         intializeMainMenu();
+    }
+
+    private void close(){
+        if(jmeThread != null){
+            app.stop();
+        }
+
+        if(isLevelSelectionUIOpen){
+            screenStackPane.getChildren().removeLast();
+        }
+
+        stage.close();
     }
 }

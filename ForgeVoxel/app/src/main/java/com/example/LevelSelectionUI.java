@@ -199,8 +199,8 @@ public class LevelSelectionUI {
                     MainMenu.jmeThread = new Thread(
                         () -> {
                             MainMenu.levelIO.loadFunc(puzzelLevel);
-                            App app = new App(puzzelLevel, puzzelNumber, this);
-                            app.start();
+                            MainMenu.app = new App(puzzelLevel, puzzelNumber, this);
+                            MainMenu.app.start();
                         }
                     );
 

@@ -41,8 +41,11 @@ public class Cube extends Voxel{
         double groupZ = z * Voxel.UNIT_SIZE; 
         double groupY = y * Voxel.UNIT_SIZE;
 
+        float normalisedDistnace = distFromZero / gridRadius;
+        float delay = FastMath.pow(normalisedDistnace, VoxelAnimation.RADIAL_DELAY_EXPONENT) * VoxelAnimation.MAX_RADIAL_DELAY;
+
+        cube.addControl(new VoxelAnimation(delay, (float)dimension));
         cube.setLocalTranslation((float)groupX, (float)groupY, (float)groupZ);
-        cube.addControl(new VoxelAnimation((distFromZero / gridRadius) * VoxelAnimation.delayDuaration, (float)dimension));
         node.attachChild(cube);
     }
 

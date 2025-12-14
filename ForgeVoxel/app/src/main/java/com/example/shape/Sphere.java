@@ -6,9 +6,11 @@ import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
 
 public class Sphere extends Voxel{
-    private Geometry sphere;
+    private Spatial sphere;
+    private static Spatial sphereModel;
 
     public Sphere(int x, int y, int z, MaterialEnum materialEnum, Colors color, Size size) {
         this.x = x;
@@ -25,11 +27,7 @@ public class Sphere extends Voxel{
         this.material.getAdditionalRenderState().setDepthWrite(true);
         this.material.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Back);        
 
-        com.jme3.scene.shape.Sphere sphereShape = new com.jme3.scene.shape.Sphere(50, 50, (float)(dimension));
-        this.sphere = new Geometry(
-            String.format("Voxel-%d|Sphere|%c|%d|%d|%d", color.ordinal(), size.name().charAt(0), x, y, z),
-            sphereShape
-        );
+        this.sphere = getModel(String.format("Voxel-%d|Sphere|%c|%d|%d|%d", color.ordinal(), size.name().charAt(0), x, y, z));
         this.sphere.setMaterial(this.material);
         this.sphere.setShadowMode(ShadowMode.CastAndReceive);
         this.sphere.setQueueBucket(RenderQueue.Bucket.Opaque);
@@ -43,16 +41,36 @@ public class Sphere extends Voxel{
         double groupZ = z * Voxel.UNIT_SIZE; 
         double groupY = y * Voxel.UNIT_SIZE;
 
+        float normalisedDistnace = distFromZero / gridRadius;
+        float delay = FastMath.pow(normalisedDistnace, VoxelAnimation.RADIAL_DELAY_EXPONENT) * VoxelAnimation.MAX_RADIAL_DELAY;
+        
+        sphere.addControl(new VoxelAnimation(delay, (float)(dimension * 2)));
         sphere.setLocalTranslation((float)groupX, (float)groupY, (float)groupZ);
-        sphere.addControl(new VoxelAnimation((distFromZero / gridRadius) * VoxelAnimation.delayDuaration, (float)(dimension * 2)));
         node.attachChild(sphere);
     }
 
-    public Geometry getSphere() {
+    public Spatial getSphere() {
         return sphere;
     }
 
-    public void setSphere(Geometry sphere) {
+    public void setSphere(Spatial sphere) {
         this.sphere = sphere;
+    }
+
+    private Spatial getModel(String name){
+        if(sphereModel == null){
+            sphereModel = assetManager.loadModel("Models/sphere.gltf");
+        }
+
+        Spatial clone = sphereModel.clone();
+        clone.setName(name);
+        clone.depthFirstTraversal(spatial -> {
+                if (spatial instanceof Geometry) {
+                    spatial.setName(name);
+                }
+            }
+        );
+
+        return clone;
     }
 }

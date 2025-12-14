@@ -42,8 +42,11 @@ public class Cylinder extends Voxel{
         double groupZ = z * Voxel.UNIT_SIZE; 
         double groupY = y * Voxel.UNIT_SIZE;
 
+        float normalisedDistnace = distFromZero / gridRadius;
+        float delay = FastMath.pow(normalisedDistnace, VoxelAnimation.RADIAL_DELAY_EXPONENT) * VoxelAnimation.MAX_RADIAL_DELAY;
+
+        cylinder.addControl(new VoxelAnimation(delay, (float)(dimension * 2)));
         cylinder.setLocalTranslation((float)groupX, (float)groupY, (float)groupZ);
-        cylinder.addControl(new VoxelAnimation((distFromZero / gridRadius) * VoxelAnimation.delayDuaration, (float)(dimension * 2)));
         node.attachChild(cylinder);
     }
 

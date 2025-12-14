@@ -48,6 +48,7 @@ public class App extends SimpleApplication{
 
         Platform.runLater(() -> { if(codeEditorUI != null){codeEditorUI.close();} });
         MainMenu.jmeThread = null;
+        MainMenu.app = null;
     }
 
     @Override
@@ -58,6 +59,7 @@ public class App extends SimpleApplication{
         
         Platform.runLater(() -> { if(codeEditorUI != null){codeEditorUI.close();} });
         MainMenu.jmeThread = null;
+        MainMenu.app = null;
     }
 
     // public static void main(String[] args) {

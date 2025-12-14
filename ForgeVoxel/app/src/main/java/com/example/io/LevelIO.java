@@ -36,7 +36,7 @@ public class LevelIO {
             level = levelsArray[i];
 
             if(lastPlayedLevelName != null && level.getPath().endsWith("\\" + lastPlayedLevelName + ".dat")){
-                lastPlayedLevelIndex = i;
+                lastPlayedLevelIndex = i - 1;
             }
 
             levels.add(readLevel(level.getPath(), readMetaData));
