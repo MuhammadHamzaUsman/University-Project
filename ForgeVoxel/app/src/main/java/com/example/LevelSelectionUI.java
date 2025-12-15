@@ -39,14 +39,14 @@ public class LevelSelectionUI {
         this.height = height;
 
         font = Font.loadFont(
-            getClass().getResourceAsStream("/BoldPixels.ttf"),
+            getClass().getResourceAsStream("/fonts/BoldPixels.ttf"),
             30
         );
     }
 
     public VBox intializeUI(StackPane stackPane){
-        ImageView exitButtonGraphic = new ImageView(new Image(getClass().getResourceAsStream("/exit.png")));
-        ImageView exitButtonPressedGraphic = new ImageView(new Image(getClass().getResourceAsStream("/exit_pressed.png")));
+        ImageView exitButtonGraphic = new ImageView(new Image(getClass().getResourceAsStream("/images/exit.png")));
+        ImageView exitButtonPressedGraphic = new ImageView(new Image(getClass().getResourceAsStream("/images/exit_pressed.png")));
         
         Button exitButton = new Button();
         exitButton.setBackground(Background.EMPTY);
@@ -54,9 +54,9 @@ public class LevelSelectionUI {
         exitButton.setGraphic(exitButtonGraphic);
         exitButton.setContentDisplay(ContentDisplay.CENTER);
         
-        Image cardBackGround = new Image(getClass().getResourceAsStream("/level_card_back.png"));
-        Image cardBackGroundPressed = new Image(getClass().getResourceAsStream("/level_card_back_pressed.png"));
-        completdGraphic = new Image(getClass().getResourceAsStream("/completed.png"));
+        Image cardBackGround = new Image(getClass().getResourceAsStream("/images/level_card_back.png"));
+        Image cardBackGroundPressed = new Image(getClass().getResourceAsStream("/images/level_card_back_pressed.png"));
+        completdGraphic = new Image(getClass().getResourceAsStream("/images/completed.png"));
 
         VBox layout = new VBox(10);
         layout.setPadding(new Insets(5, 5, 5, 5));

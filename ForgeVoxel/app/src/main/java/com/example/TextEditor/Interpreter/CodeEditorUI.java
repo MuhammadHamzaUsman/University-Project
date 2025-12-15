@@ -104,13 +104,13 @@ public class CodeEditorUI{
 
     public void intializeUI(){
         font = Font.loadFont(
-            getClass().getResourceAsStream("/BlockCraftMedium-PVLzd.otf"),
+            getClass().getResourceAsStream("/fonts/BlockCraftMedium-PVLzd.otf"),
             14
         );
 
-        cubeImage = new Image(getClass().getResourceAsStream("/cube.png"));
-        sphereImage = new Image(getClass().getResourceAsStream("/sphere.png"));
-        cylinderImage = new Image(getClass().getResourceAsStream("/cylinder.png"));
+        cubeImage = new Image(getClass().getResourceAsStream("/images/cube.png"));
+        sphereImage = new Image(getClass().getResourceAsStream("/images/sphere.png"));
+        cylinderImage = new Image(getClass().getResourceAsStream("/images/cylinder.png"));
         
         intializeTopBar();
         intializeCodeEditor();
@@ -143,6 +143,8 @@ public class CodeEditorUI{
         editorStage.setAlwaysOnTop(true);
         editorStage.initStyle(StageStyle.UNDECORATED);
 
+        editorStage.getIcons().add(new Image(getClass().getResourceAsStream("/images/icon.png")));
+        editorStage.setTitle("Forge Voxel");
         editorStage.show();
     }
 
@@ -217,7 +219,7 @@ public class CodeEditorUI{
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        ImageView terminal  = new ImageView(new Image(getClass().getResourceAsStream("/terminal.png")));
+        ImageView terminal  = new ImageView(new Image(getClass().getResourceAsStream("/images/terminal.png")));
         terminal.setOnMouseClicked(
             (event) -> {
                 if(event.getButton() == MouseButton.PRIMARY){
@@ -231,8 +233,8 @@ public class CodeEditorUI{
             }
         );
 
-        ImageView exitButtonGraphic = new ImageView(new Image(getClass().getResourceAsStream("/exit.png")));
-        ImageView exitButtonPressedGraphic = new ImageView(new Image(getClass().getResourceAsStream("/exit_pressed.png")));
+        ImageView exitButtonGraphic = new ImageView(new Image(getClass().getResourceAsStream("/images/exit.png")));
+        ImageView exitButtonPressedGraphic = new ImageView(new Image(getClass().getResourceAsStream("/images/exit_pressed.png")));
         
         Button exitButton = new Button();
         exitButton.setBackground(Background.EMPTY);
@@ -251,10 +253,10 @@ public class CodeEditorUI{
         );
 
         nextGraphics = new ImageView[]{
-            new ImageView(new Image(getClass().getResourceAsStream("/next.png"))),
-            new ImageView(new Image(getClass().getResourceAsStream("/next_pressed.png"))),
-            new ImageView(new Image(getClass().getResourceAsStream("/next_disable.png"))),
-            new ImageView(new Image(getClass().getResourceAsStream("/next_pressed_disable.png")))
+            new ImageView(new Image(getClass().getResourceAsStream("/images/next.png"))),
+            new ImageView(new Image(getClass().getResourceAsStream("/images/next_pressed.png"))),
+            new ImageView(new Image(getClass().getResourceAsStream("/images/next_disable.png"))),
+            new ImageView(new Image(getClass().getResourceAsStream("/images/next_pressed_disable.png")))
         };
         
         nextButton = new Button();
@@ -415,7 +417,7 @@ public class CodeEditorUI{
 
     private HBox getRowOfSizes(){
 
-        Image image = new Image(getClass().getResourceAsStream("/cube.png"));
+        Image image = new Image(getClass().getResourceAsStream("/images/cube.png"));
 
         ImageView smallImage = new ImageView(image);
         ImageView mediumImage = new ImageView(image);

@@ -6,7 +6,12 @@ package com.example;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import javax.imageio.ImageIO;
+
 import org.lwjgl.glfw.GLFW;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import com.example.TextEditor.Interpreter.CodeEditorUI;
 import com.example.TextEditor.Interpreter.interpreter.RuntimeError;
@@ -31,6 +36,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.shape.Quad;
 import com.jme3.shadow.DirectionalLightShadowRenderer;
 import com.jme3.shadow.EdgeFilteringMode;
+import com.jme3.system.AppSettings;
 import com.jme3.system.lwjgl.LwjglWindow;
 
 import javafx.application.Platform;
@@ -92,12 +98,27 @@ public class App extends SimpleApplication{
         this.puzzelLevel = puzzelLevel;
         this.puzzelNumber = puzzelNumber;
         this.levelSelectionUI = levelSelectionUI;
+
+        AppSettings settings = new AppSettings(true);
+        settings.setTitle("Forge Voxel");
+        settings.setResizable(true);
+        try {
+            settings.setIcons(
+                new BufferedImage[]{
+                    ImageIO.read(getClass().getResourceAsStream("/images/icon.png"))
+                }   
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        setSettings(settings);
     }
 
     @Override
     public void simpleInitApp() {
         assetManager.registerLocator("assets/", FileLocator.class);
         Voxel.setAssetManager(assetManager);
+        Voxel.intializePopSound();
 
         puzzel = puzzelLevel.toPuzzel(this);
 

@@ -3,10 +3,14 @@ package com.example.shape;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.example.MainMenu;
 import com.jme3.asset.AssetManager;
 import com.jme3.asset.AssetNotFoundException;
+import com.jme3.audio.AudioData;
+import com.jme3.audio.AudioNode;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
@@ -25,6 +29,8 @@ public abstract class Voxel {
     protected static AssetManager assetManager;
 
     public final static double UNIT_SIZE = 1.0;
+    
+    public static AudioNode popSound;
 
     public static final ColorRGBA borderColor = ColorRGBA.fromRGBA255(255, 237, 199, 255);
 
@@ -32,6 +38,7 @@ public abstract class Voxel {
     private static final float borderSize = (float)(UNIT_SIZE * 1.2);
     private static final float borderThickness = 0.06f;
     private static Node border;
+    
 
     private static Spatial cone = null;
 
@@ -128,6 +135,29 @@ public abstract class Voxel {
         }
 
         return cone.clone();
+    }
+
+    public static void intializePopSound(){
+        if(popSound == null){
+            popSound = new AudioNode(assetManager, "Sounds/pop1.ogg", AudioData.DataType.Buffer);
+            popSound.setVolume((float)MainMenu.popSoundLevel);
+            popSound.setPositional(true);
+            popSound.setLooping(false);
+        }
+    }
+
+    public static void updatePopSoundVolume(double volume){
+        if(popSound != null) {
+            popSound.setVolume((float) volume);
+        }
+    }
+
+    public static void updatePopSoundPos(Vector3f position){
+        popSound.setLocalTranslation(position);
+    }
+
+    public static void playPopSound(){
+        popSound.playInstance();
     }
 
     public int getX() {

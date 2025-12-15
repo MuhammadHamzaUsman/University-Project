@@ -1,13 +1,7 @@
 package com.example.TextEditor.Interpreter.statements;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class VarDeclaration extends Statement {
-    
-    @JsonProperty("name")
     private String name;
-    
-    @JsonProperty("expr")
     private ExpressionStatement expr;
 
     public VarDeclaration() {

@@ -1,6 +1,6 @@
 true 
 return {
-    Shape : SPHERE, 
+    Shape : CUBE,
     Size : LARGE,
-    Color : (abs(x) + abs(y) + abs(z)) % 16
+    Color : abs(x) % 14
 }

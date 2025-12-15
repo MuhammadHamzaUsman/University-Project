@@ -1,17 +1,10 @@
 package com.example.TextEditor.Interpreter.statements;
 
 import com.example.TextEditor.Interpreter.tokens.Operators;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class BinaryExpression extends ExpressionStatement {
-    
-    @JsonProperty("left")
     private ExpressionStatement left;
-    
-    @JsonProperty("right")
     private ExpressionStatement right;
-    
-    @JsonProperty("operator")
     private Operators operator;
 
     public BinaryExpression(){}

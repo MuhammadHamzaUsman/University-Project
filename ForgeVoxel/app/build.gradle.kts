@@ -9,7 +9,8 @@ javafx {
     modules = listOf(
         "javafx.controls",
         "javafx.fxml",
-        "javafx.graphics"
+        "javafx.graphics",
+        "javafx.media"
     )
 }
 
@@ -36,6 +37,10 @@ java {
     sourceSets["main"].java {
         srcDir("app/levels")
     }
+
+    sourceSets["main"].java {
+        srcDir("app/settings")
+    }
 }
 
 repositories {
@@ -51,6 +56,7 @@ dependencies {
     implementation("org.jmonkeyengine:jme3-desktop:$jmeVer")
     implementation("org.jmonkeyengine:jme3-lwjgl3:$jmeVer")
     implementation("org.jmonkeyengine:jme3-plugins:$jmeVer")
+    implementation("org.jmonkeyengine:jme3-jogg:$jmeVer")
 
     implementation("org.fxmisc.richtext:richtextfx:0.11.7")
 

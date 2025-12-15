@@ -1,9 +1,6 @@
 package com.example.TextEditor.Interpreter.statements;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class ReturnStatement extends Statement {
-    @JsonProperty("valueToReturn")
     private ExpressionStatement valueToReturn;
 
     public ReturnStatement() {

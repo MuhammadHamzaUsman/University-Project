@@ -1,16 +1,27 @@
 package com.example;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.List;
 
 import com.example.io.LevelIO;
 import com.example.io.PuzzelLevel;
+import com.example.shape.Voxel;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Background;
@@ -20,6 +31,7 @@ import javafx.scene.layout.BackgroundRepeat;
 import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -40,23 +52,25 @@ public class MainMenu extends Application{
 
     public static Thread jmeThread = null;
     public static App app = null;
+    public static double popSoundLevel = 1;
     
     private boolean isLevelSelectionUIOpen = false;
     private VBox levelSelectionVBox;
     private Stage stage;
     private StackPane screenStackPane;
-
+    private double backgroundMusicLevel = 1;
 
     public void intializeMainMenu(){
         
         font = Font.loadFont(
-            getClass().getResourceAsStream("/BlockCraftMedium-PVLzd.otf"),
+            getClass().getResourceAsStream("/fonts/BlockCraftMedium-PVLzd.otf"),
             14
         );
         
         levels = levelIO.readPuzzels(true);
 
-        Image backgroundImageInput = new Image(getClass().getResourceAsStream("/background.jpg"));
+        
+        Image backgroundImageInput = new Image(getClass().getResourceAsStream("/images/background.jpg"));
         BackgroundImage backgroundImage = new BackgroundImage(
             backgroundImageInput, 
             BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, 
@@ -65,7 +79,7 @@ public class MainMenu extends Application{
         );
         Background background = new Background(backgroundImage);
 
-        Image buttonBackground = new Image(getClass().getResourceAsStream("/button.png"));
+        Image buttonBackground = new Image(getClass().getResourceAsStream("/images/button.png"));
         ImageView[] imageViews = new ImageView[3];
         for (int i = 0; i < imageViews.length; i++) {
             imageViews[i] = new ImageView(buttonBackground);
@@ -76,7 +90,7 @@ public class MainMenu extends Application{
             imageViews[i].setCache(true);
         }
 
-        Image buttonPressedBackground = new Image(getClass().getResourceAsStream("/button_pressed.png"));
+        Image buttonPressedBackground = new Image(getClass().getResourceAsStream("/images/button_pressed.png"));
         ImageView[] imageViewsPressed = new ImageView[3];
         for (int i = 0; i < imageViewsPressed.length; i++) {
             imageViewsPressed[i] = new ImageView(buttonPressedBackground);
@@ -87,7 +101,7 @@ public class MainMenu extends Application{
             imageViewsPressed[i].setCache(true);
         }
 
-        Image logoTextInput = new Image(getClass().getResourceAsStream("/forge_voxel.png"));
+        Image logoTextInput = new Image(getClass().getResourceAsStream("/images/forge_voxel.png"));
         ImageView logoImage = new ImageView(logoTextInput);
         logoImage.setPreserveRatio(true);
         logoImage.setSmooth(false);
@@ -142,7 +156,14 @@ public class MainMenu extends Application{
         
         levelSelectionVBox = levelUi.intializeUI(screenStackPane);
 
+        readSoundLevels();
+        VBox musicSlider = intializeMusicSliders(backgroundMusicLevel, popSoundLevel);
+        screenStackPane.getChildren().add(musicSlider);
+
         Scene scene = new Scene(screenStackPane, 640, 480);
+        scene.getStylesheets().add(
+            getClass().getResource("/style.css").toExternalForm()
+        );
         
         stage.setScene(scene);
         stage.setMaximized(true);
@@ -190,10 +211,13 @@ public class MainMenu extends Application{
         exitButton.setOnMouseReleased(
             (event) -> {
                 exitButton.setGraphic(imageViews[2]);
+                writeSoundLevels();
                 close();
             }
         );
 
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/icon.png")));
+        stage.setTitle("Forge Voxel");
         stage.show();
     }
 
@@ -211,6 +235,125 @@ public class MainMenu extends Application{
             screenStackPane.getChildren().removeLast();
         }
 
+
         stage.close();
+    }
+
+    private VBox intializeMusicSliders(double musicVolume, double popVolume){
+        try{
+            VBox musicSlider = new VBox(10);
+            musicSlider.setPadding(new Insets(10, 10, 0, 0));
+            musicSlider.setAlignment(Pos.TOP_RIGHT);
+            StackPane.setAlignment(musicSlider, Pos.TOP_RIGHT);
+
+            Media backgroundMusic = new Media(getClass().getResource("/sounds/USSR National Anthem lofi by Febri Ultra.mp3").toURI().toString());
+            MediaPlayer backgroundMusicPlayer = new MediaPlayer(backgroundMusic);
+            backgroundMusicPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+            backgroundMusicPlayer.setOnReady(() -> backgroundMusicPlayer.play());
+            backgroundMusicPlayer.setVolume(musicVolume);
+
+            musicSlider.getChildren().add(
+                getSlider(
+                    "Background Music", 
+                    (obs, oldVol, newVol) -> {
+                        if(backgroundMusicPlayer != null){
+                            backgroundMusicPlayer.setVolume(newVol.doubleValue());
+                        }
+                        backgroundMusicLevel = newVol.doubleValue();
+                    }, 
+                    musicVolume
+                )
+            );
+
+            Voxel.updatePopSoundVolume(popVolume);
+            musicSlider.getChildren().add(
+                getSlider(
+                    "Game Sounds", 
+                    (observable, oldVolume, newVolumn) -> {
+                        popSoundLevel = newVolumn.doubleValue();
+                        if(jmeThread != null){
+                            Voxel.updatePopSoundVolume(popSoundLevel);
+                        }
+                    }, 
+                    popVolume
+                )
+            );
+
+            musicSlider.setMaxWidth(Region.USE_PREF_SIZE);
+            musicSlider.setMinWidth(Region.USE_PREF_SIZE);
+            musicSlider.setPrefWidth(Region.USE_COMPUTED_SIZE);
+            musicSlider.setMaxHeight(Region.USE_PREF_SIZE);
+            musicSlider.setMinHeight(Region.USE_PREF_SIZE);
+            musicSlider.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            return musicSlider;
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private HBox getSlider(String label, ChangeListener<? super Number> listener, double startVolume){
+        try{
+            Slider soundSlider = new Slider(0, 1, startVolume);
+            soundSlider.getStyleClass().add("slider");
+            soundSlider.setBackground(Background.EMPTY);
+            soundSlider.valueProperty().addListener(listener);
+
+            StackPane trackPane = new StackPane();
+            trackPane.setPrefSize(300, 20);
+            trackPane.setBackground(
+                new Background(
+                    new BackgroundImage(
+                        new Image("images/slider.png"),
+                        BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
+                        BackgroundPosition.CENTER,
+                        new BackgroundSize(300, 20, false, false, false, false)
+                    )
+                )
+            );
+
+            StackPane sliderStack = new StackPane(trackPane, soundSlider);
+            
+            Label sliderLabel = new Label(label);
+            sliderLabel.setTextFill(Color.WHITE);
+            sliderLabel.setFont(Font.font(LevelSelectionUI.font.getFamily(), 18));
+            
+            HBox sliderRow = new HBox(10, sliderLabel, sliderStack);
+
+            return sliderRow;
+        } 
+        catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static final String SETTINGS_FILE = System.getProperty("user.dir") + "\\settings\\userSounds.dat";
+    
+    private void writeSoundLevels(){
+        try {
+            DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(new File(SETTINGS_FILE)));
+            outputStream.writeDouble(backgroundMusicLevel);
+            outputStream.writeDouble(popSoundLevel);
+            outputStream.close();
+        } 
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void readSoundLevels(){
+        try {
+            DataInputStream inputStream = new DataInputStream(new FileInputStream(new File(SETTINGS_FILE)));
+            backgroundMusicLevel = inputStream.readDouble();
+            popSoundLevel = inputStream.readDouble();
+            inputStream.close();
+        } 
+        catch (Exception e) {
+            backgroundMusicLevel = 1;
+            popSoundLevel = 1;
+            e.printStackTrace();
+        }
     }
 }

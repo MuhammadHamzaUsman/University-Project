@@ -3,10 +3,7 @@ package com.example.TextEditor.Interpreter.statements;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class BlockStatement extends Statement {
-    @JsonProperty("statementsArray")
     private List<Statement> statements;
 
     public BlockStatement() {

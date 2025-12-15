@@ -1,5 +1,6 @@
 package com.example.shape;
 
+import com.jme3.math.FastMath;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
 import com.jme3.scene.control.AbstractControl;
@@ -7,7 +8,7 @@ import com.jme3.scene.control.AbstractControl;
 public class VoxelAnimation extends AbstractControl{
     private static final float SCALING_FACTOR = 1.2f;
     
-    private static final float DURATION = 0.175f;
+    private static final float DURATION = 0.2f;
     public static final float MAX_RADIAL_DELAY = 1f;
     public static final float RADIAL_DELAY_EXPONENT = 1f;
 
@@ -15,10 +16,13 @@ public class VoxelAnimation extends AbstractControl{
     private boolean isIntialized = false;
     private float startingDelay = 0f;
     private float maxSize = 1f;
+    private float audioDelay;
+    private boolean audioPlayed = false;
 
     public VoxelAnimation(float startingDelay, float maxSize){
         this.startingDelay = startingDelay;
         this.maxSize = maxSize;
+        audioDelay = FastMath.rand.nextFloat(0f, 0.1f);
     };
 
     public VoxelAnimation(){};
@@ -43,10 +47,12 @@ public class VoxelAnimation extends AbstractControl{
 
         float scale = easeOutBack(completionPercentage) * maxSize;
         spatial.setLocalScale(scale);
-
-        // if(spatial.getName().contains("Sphere")){
-        //     System.out.println("completionPercentage: " + completionPercentage + ", scale: " + scale + ", timePassed " + timePassed + ", maxSize: " + maxSize);
-        // }
+        
+        if(!audioPlayed && timePassed > audioDelay){
+            Voxel.updatePopSoundPos(spatial.getWorldTranslation());
+            Voxel.playPopSound();
+            audioPlayed = true;
+        }
 
         if (completionPercentage >= 1f) {
             spatial.setLocalScale(maxSize);

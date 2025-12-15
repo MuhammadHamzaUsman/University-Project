@@ -1,11 +1,7 @@
 package com.example.TextEditor.Interpreter.statements;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class WhileStatement extends Statement {
-    @JsonProperty("condition")
     private ExpressionStatement condition;
-    @JsonProperty("body")
     private BlockStatement body;
     
     public WhileStatement() {
