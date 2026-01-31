@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.example.TextEditor.Interpreter.statements.*;
-// import com.example.TextEditor.Interpreter.tokens.Functions;
 import com.example.TextEditor.Interpreter.tokens.Operation;
 import com.example.TextEditor.Interpreter.tokens.Operators;
 import com.example.TextEditor.Interpreter.tokens.Token;
@@ -42,6 +41,14 @@ public class Interpreter{
         }
     }
 
+    public static void main(String[] args){
+        try {
+            executeProgramInteractively("C:/Users/Dell/Documents/UniversityProject/University-Project/ForgeVoxel/app/src/main/java/com/example/TextEditor/Interpreter/Test.txt");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static Value executeProgramInteractively(String filePath) throws FileNotFoundException{
         Scanner input = new Scanner(System.in);
         Scanner fileInput;
@@ -63,10 +70,12 @@ public class Interpreter{
                 }
 
                 tokens = Lexer.lexer(strbldr.toString());
+                System.out.println(tokens);
                 strbldr.setLength(0);
                 variables = new Variables(null);
                 parser = new Parser(variables, tokens);
                 interpreter = new Interpreter(variables);
+                System.out.println(parser.parseProgram());
                 lastValue = interpreter.executeProgram(parser.parseProgram());
                 System.out.println(lastValue);
                 fileInput.close();

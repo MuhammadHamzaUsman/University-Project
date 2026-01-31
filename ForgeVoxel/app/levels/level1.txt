@@ -1,6 +1,8 @@
 true 
+if( abs(y) == 1){
 return {
-    Shape : CUBE,
+    Shape : abs(x) % 3,
     Size : LARGE,
-    Color : abs(x) % 14
+    Color : abs(x) + abs(y) + abs(z) % 16
+}
 }

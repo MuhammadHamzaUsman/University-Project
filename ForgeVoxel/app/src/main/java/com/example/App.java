@@ -101,7 +101,6 @@ public class App extends SimpleApplication{
 
         AppSettings settings = new AppSettings(true);
         settings.setTitle("Forge Voxel");
-        settings.setResizable(true);
         try {
             settings.setIcons(
                 new BufferedImage[]{
@@ -111,6 +110,7 @@ public class App extends SimpleApplication{
         } catch (IOException e) {
             e.printStackTrace();
         }
+        // err()
         setSettings(settings);
     }
 

@@ -1,0 +1,4 @@
+name=level3
+size=15 15 15
+image=test.png
+function=test.txt

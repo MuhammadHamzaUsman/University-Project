@@ -1,0 +1,7 @@
+if(y == 0 && z == 0 && x == 0){
+    return {
+        Shape : CUBE, 
+        Size : LARGE,
+        Color : (abs(x) + abs(y) + abs(z)) % 16
+    }
+}

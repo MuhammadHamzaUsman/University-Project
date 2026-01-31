@@ -1,6 +1,9 @@
 true 
-return {
-    Shape : SPHERE,
-    Size : LARGE,
-    Color : abs(x) % 16 
+if(y == 0){
+
+return{
+    Shape : CUBE,
+    Size  : abs(x) % 3,
+    Color : (abs(x ^ 2) + abs(y ^ 2) + abs(z ^ 2)) % 16
+}
 }
